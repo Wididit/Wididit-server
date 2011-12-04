@@ -127,7 +127,7 @@ class Resource(object):
         actor, anonymous = self.authenticate(request, rm)
 
         if anonymous is CHALLENGE:
-            return actor()
+            return actor(request)
         else:
             handler = actor
 

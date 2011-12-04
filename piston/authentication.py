@@ -11,6 +11,7 @@ from django.core.urlresolvers import get_callable
 from django.core.exceptions import ImproperlyConfigured
 from django.shortcuts import render_to_response
 from django.template import RequestContext
+from django.core.context_processors import csrf
 
 from piston import forms
 
@@ -63,7 +64,7 @@ class HttpBasicAuthentication(object):
                 
         return not request.user in (False, None, AnonymousUser())
         
-    def challenge(self):
+    def challenge(self, request):
         resp = HttpResponse("Authorization Required")
         resp['WWW-Authenticate'] = 'Basic realm="%s"' % self.realm
         resp.status_code = 401
@@ -266,7 +267,7 @@ class OAuthAuthentication(object):
             
         return False
         
-    def challenge(self):
+    def challenge(self, request):
         """
         Returns a 401 response with a small bit on
         what OAuth is, and where to learn more about it.
@@ -284,8 +285,9 @@ class OAuthAuthentication(object):
         for k, v in self.builder(realm=realm).iteritems():
             response[k] = v
 
-        tmpl = loader.render_to_string('oauth/challenge.html',
-            { 'MEDIA_URL': settings.MEDIA_URL })
+        context = { 'MEDIA_URL': settings.MEDIA_URL }
+        context.update(csrf(request))
+        tmpl = loader.render_to_string('oauth/challenge.html', context)
 
         response.content = tmpl
 
