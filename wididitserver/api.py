@@ -111,11 +111,11 @@ urlpatterns = patterns('',
     url(r'^oauth/authorize/$',      'piston.authentication.oauth_user_auth'),
     url(r'^oauth/access_token/$',   'piston.authentication.oauth_access_token'),
 
-    url(r'^server/$', server_handler, {'emitter_format': 'xml'}, name='wididit:server_list'),
-    url(r'^people/$', people_handler, {'emitter_format': 'xml'}, name='wididit:people_list'),
-    url(r'^people/(?P<author>%s)/$' % constants.USERNAME_REGEXP, entry_handler, {'emitter_format': 'xml'}, name='wididit:show_people'),
-    url(r'^entry/$', entry_handler, {'emitter_format': 'xml'}, name='wididit:entry_list_all'),
-    url(r'^entry/(?P<author>%s)/$' % constants.USERNAME_REGEXP, entry_handler, {'emitter_format': 'xml'}, name='wididit:entry_list_author'),
-    url(r'^entry/(?P<author>%s)/(?P<id>[0-9]+)/$' % constants.USERNAME_REGEXP, entry_handler, {'emitter_format': 'xml'}, name='wididit:show_entry'),
+    url(r'^server/$', server_handler, name='wididit:server_list'),
+    url(r'^people/$', people_handler, name='wididit:people_list'),
+    url(r'^people/(?P<author>%s)/$' % constants.USERNAME_REGEXP, entry_handler, name='wididit:show_people'),
+    url(r'^entry/$', entry_handler, name='wididit:entry_list_all'),
+    url(r'^entry/(?P<author>%s)/$' % constants.USERNAME_REGEXP, entry_handler, name='wididit:entry_list_author'),
+    url(r'^entry/(?P<author>%s)/(?P<id>[0-9]+)/$' % constants.USERNAME_REGEXP, entry_handler, name='wididit:show_entry'),
 )
 
