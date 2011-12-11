@@ -1,0 +1,9 @@
+[
+  {
+    "model": "wididitserver.Server",
+    "pk": 1,
+    "fields": {
+      "key": ""
+    }
+  }
+]

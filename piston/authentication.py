@@ -285,7 +285,8 @@ class OAuthAuthentication(object):
         for k, v in self.builder(realm=realm).iteritems():
             response[k] = v
 
-        context = { 'MEDIA_URL': settings.MEDIA_URL }
+        context = { 'MEDIA_URL': settings.MEDIA_URL,
+                'form': forms.OAuthAuthenticationForm()}
         context.update(csrf(request))
         tmpl = loader.render_to_string('oauth/challenge.html', context)
 
