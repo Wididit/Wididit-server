@@ -24,6 +24,7 @@ from piston.utils import validate
 from piston.utils import rc
 
 from wididit import constants
+from wididit import utils
 
 from wididitserver.models import Server, People, Entry, User
 from wididitserver.models import ServerForm, PeopleForm, EntryForm
@@ -76,18 +77,18 @@ class AnonymousPeopleHandler(AnonymousBaseHandler):
     model = People
     fields = ('username', 'server',)
 
-    def read(self, request, username=None):
+    def read(self, request, usermask=None):
         """Returns either a list of all people registered, or the
         user matching the username (wildcard not allowed)."""
-        if username is None:
+        if usermask is None:
             return People.objects.all()
         else:
             try:
-                if '@' in username:
-                    username, hostname = username.split('@')
-                    server = get_server(hostname)
-                else:
-                    server = get_server()
+                username, servername = utils.usermask2tuple(usermask,
+                        settings.WIDIDIT_HOSTNAME)
+                print repr(username)
+                print repr(servername)
+                server = get_server(servername)
                 obj = People.objects.get(username=username, server=server)
                 return obj
             except People.DoesNotExist:
@@ -98,10 +99,12 @@ class AnonymousPeopleHandler(AnonymousBaseHandler):
     @validate(PeopleForm, 'POST')
     def create(self, request):
         data = request.form.cleaned_data
-        user = User.objects.create_user(data['username'], data['email'], data['password'])
+        user = User.objects.create_user(data['username'], data['email'],
+                data['password'])
         user.save()
         people = request.form.save()
         people.user = user
+        people.server = get_server()
         people.save()
         return rc.CREATED
 
@@ -112,7 +115,12 @@ class PeopleHandler(BaseHandler):
     fields = anonymous.fields
 
     @validate(PeopleForm, 'PUT')
-    def update(self, request, username):
+    def update(self, request, usermask):
+        username, servername = utils.usermask2tuple(usermask,
+                settings.WIDIDIT_HOSTNAME)
+        if servername != settings.WIDIDIT_HOSTNAME:
+            # Want to change the password on another server?
+            return rc.BAD_REQUEST
         data = request.form.cleaned_data
         if username != request.user.username:
             # Don't allow to edit other's account
@@ -134,44 +142,61 @@ class AnonymousEntryHandler(AnonymousBaseHandler):
     allowed_methods = ('GET',)
     model = Entry
 
-    def read(self, request, author=None, id=None):
-        """Returns either a list of notices (either from everybody if `author`
-        is not given, either from the `author`) or an entry if `author`
-        AND `id` are given."""
-        if author is not None:
-            server = get_server()
+    def read(self, request, usermask=None, id=None):
+        """Returns either a list of notices (either from everybody if
+        `usermask` is not given, either from the `usermask`) or an entry if
+        `usermask` AND `id` are given."""
+        if usermask is not None:
+            username, servername = utils.usermask2tuple(usermask,
+                    settings.WIDIDIT_HOSTNAME)
             try:
-                author = User.objects.get(username=author)
+                server = get_server(servername)
+                user = People.objects.get(username=username, server=server)
             except User.DoesNotExist:
                 return rc.NOT_FOUND
-        if author is None and id is None:
+            except Server.DoesNotExist:
+                return rc.NOT_FOUND
+
+        if usermask is None and id is None:
             # FIXME: limit this to a fixed number of results
             return Entry.objects.all()
-        elif id is None: # and username is not None
-            return Entry.objects.filter(author=author)
+        elif id is None: # and author is not None
+            return Entry.objects.filter(author=user)
         else:
             assert id is not None and author is not None
             try:
-                return Entry.objects.get(author=author, id=id)
+                return Entry.objects.get(author=user, id=id)
             except Entry.DoesNotExist:
                 return rc.NOT_FOUND
 
 class EntryHandler(BaseHandler):
+    allowed_methods = ('GET', 'POST',)
     anonymous = AnonymousEntryHandler
     model = anonymous.model
 
-    def read(self, request, author=None, id=None):
-        return self.anonymous().read(request, author, id)
+    @validate(EntryForm, 'POST')
+    def create(self, request, usermask):
+        username, hostname = utils.usermask2tuple(usermask,
+                settings.WIDIDIT_HOSTNAME)
+        if hostname != settings.WIDIDIT_HOSTNAME:
+            print 1
+            # Want to change the password on another server?
+            return rc.NOT_IMPLEMENTED
+        data = request.form.cleaned_data
+        entry = request.form.save(commit=False)
+        entry.author = People.objects.get(user=request.user)
+        entry.save()
+        return rc.CREATED
 
 entry_handler = Resource(EntryHandler, authentication=auth)
 
 urlpatterns = patterns('',
     url(r'^server/$', server_handler, name='wididit:server_list'),
     url(r'^people/$', people_handler, name='wididit:people_list'),
-    url(r'^people/(?P<username>%s)/$' % constants.USERNAME_REGEXP, people_handler, name='wididit:show_people'),
+    url(r'^people/(?P<usermask>%s)/$' % constants.USER_MIX_REGEXP, people_handler, name='wididit:show_people'),
     url(r'^entry/$', entry_handler, name='wididit:entry_list_all'),
-    url(r'^entry/(?P<author>%s)/$' % constants.USERNAME_REGEXP, entry_handler, name='wididit:entry_list_author'),
-    url(r'^entry/(?P<author>%s)/(?P<id>[0-9]+)/$' % constants.USERNAME_REGEXP, entry_handler, name='wididit:show_entry'),
-    url(r'^entry/(?P<author>%s)/(?P<id>[0-9]+)/$' % constants.USERNAME_REGEXP, entry_handler, name='wididit:show_entry'),
+    url(r'^entry/(?P<usermask>%s)/$' % constants.USER_MIX_REGEXP, entry_handler, name='wididit:entry_list_author'),
+    url(r'^entry/(?P<usermask>%s)/(?P<id>[0-9]+)/$' % constants.USER_MIX_REGEXP, entry_handler, name='wididit:show_entry'),
+    url(r'^entry/(?P<usermask>%s)/(?P<id>[0-9]+)/$' % constants.USER_MIX_REGEXP, entry_handler, name='wididit:show_entry'),
 )
 
