@@ -17,8 +17,9 @@ import re
 
 from django.db import models
 from django.contrib import admin
-from django.contrib.auth.models import User, AnonymousUser
+from django import forms
 from django.core.exceptions import ValidationError
+from django.contrib.auth.models import User, AnonymousUser
 
 from wididit import constants
 
@@ -56,6 +57,11 @@ class ServerAdmin(admin.ModelAdmin):
     pass
 admin.site.register(Server, ServerAdmin)
 
+class ServerForm(forms.ModelForm):
+    class Meta:
+        model = Server
+        exclude = ('key',)
+
 
 ##########################################################################
 # People
@@ -63,7 +69,7 @@ admin.site.register(Server, ServerAdmin)
 class People(models.Model):
     server = models.ForeignKey(Server,
             help_text='The server to where this people is register.',
-            null=True)
+            null=True, blank=True)
     username = models.CharField(max_length=constants.MAX_USERNAME_LENGTH,
             validators=[validate_username])
     user = models.OneToOneField(User,
@@ -80,6 +86,13 @@ class People(models.Model):
 class PeopleAdmin(admin.ModelAdmin):
     pass
 admin.site.register(People, PeopleAdmin)
+
+class PeopleForm(forms.ModelForm):
+    password = forms.CharField(widget=forms.PasswordInput)
+    email = forms.EmailField()
+    class Meta:
+        model = People
+        exclude = ('user',)
 
 
 ##########################################################################
@@ -140,3 +153,8 @@ class EntryAdmin(admin.ModelAdmin):
         )
     list_display = ('title', 'author')
 admin.site.register(Entry, EntryAdmin)
+
+class EntryForm(forms.ModelForm):
+    class Meta:
+        model = Entry
+        exclude = ('author', 'contributors', 'published', 'updated')
