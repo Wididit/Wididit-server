@@ -166,11 +166,6 @@ class EntryHandler(BaseHandler):
 entry_handler = Resource(EntryHandler, authentication=auth)
 
 urlpatterns = patterns('',
-    # Piston
-    url(r'^oauth/request_token/$',  'piston.authentication.oauth_request_token'),
-    url(r'^oauth/authorize/$',      'piston.authentication.oauth_user_auth'),
-    url(r'^oauth/access_token/$',   'piston.authentication.oauth_access_token'),
-
     url(r'^server/$', server_handler, name='wididit:server_list'),
     url(r'^people/$', people_handler, name='wididit:people_list'),
     url(r'^people/(?P<username>%s)/$' % constants.USERNAME_REGEXP, people_handler, name='wididit:show_people'),
