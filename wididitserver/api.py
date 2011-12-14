@@ -42,6 +42,12 @@ def get_server(hostname=None):
         hostname = settings.WIDIDIT_HOSTNAME
     return Server.objects.get(hostname=hostname)
 
+def get_user(usermask):
+    username, servername = utils.usermask2tuple(usermask,
+            settings.WIDIDIT_HOSTNAME)
+    server = get_server(servername)
+    return People.objects.get(username=username, server=server)
+
 
 ##########################################################################
 # Server
@@ -179,12 +185,14 @@ class EntryHandler(BaseHandler):
         username, hostname = utils.usermask2tuple(usermask,
                 settings.WIDIDIT_HOSTNAME)
         if hostname != settings.WIDIDIT_HOSTNAME:
-            print 1
             # Want to change the password on another server?
             return rc.NOT_IMPLEMENTED
+        user = People.objects.get(user=request.user)
+        if user != get_user(usermask):
+            return rc.FORBIDDEN
         data = request.form.cleaned_data
         entry = request.form.save(commit=False)
-        entry.author = People.objects.get(user=request.user)
+        entry.author = user
         entry.save()
         return rc.CREATED
 

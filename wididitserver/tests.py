@@ -138,6 +138,13 @@ class TestEntry(TestCase):
             'content': 'This is a test',
             'generator': 'API tests',
             'title': 'test',
+            }, **self.getExtras('tester2'))
+        self.assertEqual(response.status_code, 401, response.content)
+
+        response = c.post('/api/json/entry/tester/', {
+            'content': 'This is a test',
+            'generator': 'API tests',
+            'title': 'test',
             }, **self.getExtras())
         self.assertEqual(response.status_code, 201, response.content)
 
