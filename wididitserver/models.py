@@ -20,6 +20,10 @@ from django.contrib import admin
 from django import forms
 from django.core.exceptions import ValidationError
 from django.contrib.auth.models import User, AnonymousUser
+from django.dispatch import Signal
+from django.core.signals import request_finished
+from django.dispatch import receiver
+from django.db.models.signals import post_save
 
 from wididit import constants
 
@@ -111,6 +115,7 @@ admin.site.register(Tag, TagAdmin)
 
 class Entry(models.Model, Atomizable):
     # Fields specified in RFC 4287 (Atom Syndication Format)
+    id2 = models.IntegerField(null=True, blank=True)
     content = models.TextField()
     author = models.ForeignKey(People, related_name='author')
     category = models.ForeignKey(Tag, blank=True, null=True)
@@ -132,6 +137,23 @@ class Entry(models.Model, Atomizable):
 
     class Meta:
         verbose_name_plural = 'Entries'
+        unique_together = ('id2', 'author',)
+
+@receiver(post_save)
+def set_entry_id(sender, **kwargs):
+    entry = kwargs['instance']
+    if not isinstance(entry, Entry) or not kwargs['created']:
+        return
+
+    if entry.id2 is not None:
+        return
+    max_id = Entry.objects\
+            .filter(author=entry.author) \
+            .order_by('-id2')[0].id2 or 0
+    entry.id2 = max_id + 1
+    entry.save()
+
+Signal().connect(set_entry_id, Entry)
 
 class EntryAdmin(admin.ModelAdmin):
     fieldsets = (
