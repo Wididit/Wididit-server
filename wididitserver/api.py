@@ -180,16 +180,23 @@ class EntryHandler(BaseHandler):
     anonymous = AnonymousEntryHandler
     model = anonymous.model
 
+    def _checkAllowed(self, user, request):
+        if user.server.hostname != settings.WIDIDIT_HOSTNAME:
+            # Want to change the password on another server?
+            return rc.NOT_IMPLEMENTED
+        if user.user != request.user:
+            return rc.FORBIDDEN
+        return None
+
     @validate(EntryForm, 'POST')
     def create(self, request, usermask):
         username, hostname = utils.usermask2tuple(usermask,
                 settings.WIDIDIT_HOSTNAME)
-        if hostname != settings.WIDIDIT_HOSTNAME:
-            # Want to change the password on another server?
-            return rc.NOT_IMPLEMENTED
-        user = People.objects.get(user=request.user)
-        if user != get_user(usermask):
-            return rc.FORBIDDEN
+        user = People.objects.get(username=username,
+                server=get_server(hostname))
+        reply = self._checkAllowed(user, request)
+        if reply is not None:
+            return reply
         data = request.form.cleaned_data
         entry = request.form.save(commit=False)
         entry.author = user
