@@ -42,6 +42,17 @@ def validate_username(value):
     if not _username_regexp.match(value):
         raise ValidationError(u'%s is not a valid username.' % value)
 
+def get_server(hostname=None):
+    if hostname is None:
+        hostname = utils.settings.WIDIDIT_HOSTNAME
+    return Server.objects.get(hostname=hostname)
+
+def get_user(usermask):
+    username, servername = utils.usermask2tuple(usermask,
+            utils.settings.WIDIDIT_HOSTNAME)
+    server = get_server(servername)
+    return People.objects.get(username=username, server=server)
+
 
 ##########################################################################
 # Server
@@ -94,6 +105,21 @@ admin.site.register(People, PeopleAdmin)
 class PeopleForm(forms.ModelForm):
     password = forms.CharField(widget=forms.PasswordInput)
     email = forms.EmailField()
+
+    def save(self, commit=True, *args, **kwargs):
+        if commit:
+            data = self.cleaned_data
+            user = User.objects.create_user(data['username'], data['email'],
+                    data['password'])
+            user.save()
+            people = forms.ModelForm.save(self, commit, *args, **kwargs)
+            people.user = user
+            people.server = get_server()
+            people.save()
+        else:
+            people = forms.ModelForm.save(self, commit, *args, **kwargs)
+        return people
+
     class Meta:
         model = People
         exclude = ('user',)

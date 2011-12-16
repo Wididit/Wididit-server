@@ -28,6 +28,7 @@ from wididit import utils
 
 from wididitserver.models import Server, People, Entry, User
 from wididitserver.models import ServerForm, PeopleForm, EntryForm
+from wididitserver.models import get_server, get_user
 from wididitserver.utils import settings
 
 
@@ -36,17 +37,6 @@ from wididitserver.utils import settings
 
 auth = HttpBasicAuthentication(realm='Wididit server')
 #auth = OAuthAuthentication(realm='Wididit server')
-
-def get_server(hostname=None):
-    if hostname is None:
-        hostname = settings.WIDIDIT_HOSTNAME
-    return Server.objects.get(hostname=hostname)
-
-def get_user(usermask):
-    username, servername = utils.usermask2tuple(usermask,
-            settings.WIDIDIT_HOSTNAME)
-    server = get_server(servername)
-    return People.objects.get(username=username, server=server)
 
 
 ##########################################################################
@@ -104,14 +94,7 @@ class AnonymousPeopleHandler(AnonymousBaseHandler):
 
     @validate(PeopleForm, 'POST')
     def create(self, request):
-        data = request.form.cleaned_data
-        user = User.objects.create_user(data['username'], data['email'],
-                data['password'])
-        user.save()
-        people = request.form.save()
-        people.user = user
-        people.server = get_server()
-        people.save()
+        request.form.save()
         return rc.CREATED
 
 class PeopleHandler(BaseHandler):
