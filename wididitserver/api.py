@@ -128,12 +128,9 @@ class AnonymousEntryHandler(AnonymousBaseHandler):
         `usermask` is not given, either from the `usermask`) or an entry if
         `usermask` AND `id` are given."""
         if usermask is not None:
-            username, servername = utils.usermask2tuple(usermask,
-                    settings.WIDIDIT_HOSTNAME)
             try:
-                server = get_server(servername)
-                user = People.objects.get(username=username, server=server)
-            except User.DoesNotExist:
+                user = get_people(usermask)
+            except People.DoesNotExist:
                 return rc.NOT_FOUND
             except Server.DoesNotExist:
                 return rc.NOT_FOUND
