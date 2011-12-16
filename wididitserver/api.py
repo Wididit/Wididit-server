@@ -82,8 +82,6 @@ class AnonymousPeopleHandler(AnonymousBaseHandler):
             try:
                 username, servername = utils.usermask2tuple(usermask,
                         settings.WIDIDIT_HOSTNAME)
-                print repr(username)
-                print repr(servername)
                 server = get_server(servername)
                 obj = People.objects.get(username=username, server=server)
                 return obj
