@@ -28,7 +28,7 @@ from wididit import utils
 
 from wididitserver.models import Server, People, Entry, User
 from wididitserver.models import ServerForm, PeopleForm, EntryForm
-from wididitserver.models import get_server, get_user
+from wididitserver.models import get_server, get_people
 from wididitserver.utils import settings
 
 
@@ -80,11 +80,7 @@ class AnonymousPeopleHandler(AnonymousBaseHandler):
             return People.objects.all()
         else:
             try:
-                username, servername = utils.usermask2tuple(usermask,
-                        settings.WIDIDIT_HOSTNAME)
-                server = get_server(servername)
-                obj = People.objects.get(username=username, server=server)
-                return obj
+                return get_people(usermask)
             except People.DoesNotExist:
                 return rc.NOT_FOUND
             except Server.DoesNotExist:
@@ -103,16 +99,14 @@ class PeopleHandler(BaseHandler):
 
     @validate(PeopleForm, 'PUT')
     def update(self, request, usermask):
-        username, servername = utils.usermask2tuple(usermask,
-                settings.WIDIDIT_HOSTNAME)
-        if servername != settings.WIDIDIT_HOSTNAME:
-            # Want to change the password on another server?
+        user = get_people(usermask)
+        if not user.is_local():
             return rc.BAD_REQUEST
-        data = request.form.cleaned_data
-        if username != request.user.username:
+        if user.username != request.user.username:
             # Don't allow to edit other's account
             return rc.FORBIDDEN
-        if username != data['username']:
+        data = request.form.cleaned_data
+        if user.username != data['username']:
             # We don't allow username changes
             return rc.FORBIDDEN
         request.user.set_password(data['password'])

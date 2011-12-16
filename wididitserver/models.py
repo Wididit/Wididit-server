@@ -25,9 +25,9 @@ from django.core.signals import request_finished
 from django.dispatch import receiver
 from django.db.models.signals import post_save
 
-from wididit import constants
+from wididit import constants, utils
 
-from wididitserver import utils
+from wididitserver.utils import settings
 
 
 ##########################################################################
@@ -44,12 +44,12 @@ def validate_username(value):
 
 def get_server(hostname=None):
     if hostname is None:
-        hostname = utils.settings.WIDIDIT_HOSTNAME
+        hostname = settings.WIDIDIT_HOSTNAME
     return Server.objects.get(hostname=hostname)
 
-def get_user(usermask):
+def get_people(usermask):
     username, servername = utils.usermask2tuple(usermask,
-            utils.settings.WIDIDIT_HOSTNAME)
+            settings.WIDIDIT_HOSTNAME)
     server = get_server(servername)
     return People.objects.get(username=username, server=server)
 
@@ -59,11 +59,12 @@ def get_user(usermask):
 
 class Server(models.Model):
     hostname = models.CharField(max_length=constants.MAX_HOSTNAME_LENGTH,
-            default=utils.settings.WIDIDIT_HOSTNAME)
+            default=settings.WIDIDIT_HOSTNAME)
     key = models.TextField(null=True) # Not used for the moment.
 
-    def self(self):
-        return self.hostname == utils.settings.WIDIDIT_HOSTNAME
+    def is_self(self):
+        """Returns whether this is this server."""
+        return self.hostname == settings.WIDIDIT_HOSTNAME
 
     def __unicode__(self):
         return self.hostname
@@ -91,6 +92,10 @@ class People(models.Model):
             help_text='If this people is registered on this server, '
             'this is the associated User instance of this people.',
             blank=True, null=True)
+
+    def is_local(self):
+        """Returns whether the people is registered on this server."""
+        return self.server.is_self()
 
     def __unicode__(self):
         return '%s@%s' % (self.username, self.server)
