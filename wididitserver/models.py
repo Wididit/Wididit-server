@@ -179,4 +179,4 @@ admin.site.register(Entry, EntryAdmin)
 class EntryForm(forms.ModelForm):
     class Meta:
         model = Entry
-        exclude = ('author', 'contributors', 'published', 'updated')
+        exclude = ('id2', 'author', 'contributors', 'published', 'updated')

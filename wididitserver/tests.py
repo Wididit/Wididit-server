@@ -152,8 +152,45 @@ class TestEntry(TestCase):
         self.assertEqual(response.status_code, 200, response.content)
         reply = json.loads(response.content)
         self.assertEqual(len(reply), 1)
+        self.assertEqual(reply[0]['id2'], 1)
         self.assertEqual(reply[0]['content'], 'This is a test')
         self.assertEqual(reply[0]['generator'], 'API tests')
         self.assertEqual(reply[0]['title'], 'test')
 
+        response = c.post('/api/json/entry/tester/', {
+            'content': 'This is a second test',
+            'generator': 'API tests',
+            'title': 'test2',
+            }, **self.getExtras())
+        self.assertEqual(response.status_code, 201, response.content)
 
+        response = c.get('/api/json/entry/tester/')
+        self.assertEqual(response.status_code, 200, response.content)
+        reply = json.loads(response.content)
+        self.assertEqual(len(reply), 2)
+        self.assertEqual(reply[0]['id2'], 1)
+        self.assertEqual(reply[0]['content'], 'This is a test')
+        self.assertEqual(reply[1]['id2'], 2)
+        self.assertEqual(reply[1]['content'], 'This is a second test')
+
+    def testEdit(self):
+        c = Client()
+
+        response = c.post('/api/json/entry/tester/', {
+            'content': 'This is a test',
+            'generator': 'API tests',
+            'title': 'test',
+            }, **self.getExtras())
+        self.assertEqual(response.status_code, 201, response.content)
+
+        response = c.put('/api/json/entry/tester/1/', {
+            'content': 'This is an editted test',
+            }, **self.getExtras())
+        self.assertEqual(response.status_code, 200, response.content)
+
+        response = c.get('/api/json/entry/tester/')
+        self.assertEqual(response.status_code, 200, response.content)
+        reply = json.loads(response.content)
+        self.assertEqual(len(reply), 1)
+        self.assertEqual(reply[0]['id2'], 1)
+        self.assertEqual(reply[0]['content'], 'This is an editted test')

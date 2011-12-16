@@ -176,7 +176,7 @@ class AnonymousEntryHandler(AnonymousBaseHandler):
                 return rc.NOT_FOUND
 
 class EntryHandler(BaseHandler):
-    allowed_methods = ('GET', 'POST',)
+    allowed_methods = ('GET', 'POST', 'PUT',)
     anonymous = AnonymousEntryHandler
     model = anonymous.model
 
@@ -202,6 +202,27 @@ class EntryHandler(BaseHandler):
         entry.author = user
         entry.save()
         return rc.CREATED
+
+    def update(self, request, usermask, id=None):
+        if id is None:
+            return rc.BAD_REQUEST
+        username, hostname = utils.usermask2tuple(usermask,
+                settings.WIDIDIT_HOSTNAME)
+        user = People.objects.get(username=username,
+                server=get_server(hostname))
+        reply = self._checkAllowed(user, request)
+        if reply is not None:
+            return reply
+        try:
+            entry = Entry.objects.get(author=user, id=id)
+        except Entry.DoesNotExist:
+            return rc.NOT_FOUND
+        form = EntryForm(request.PUT, instance=entry)
+        for field in form.fields.values():
+            field.required = False
+        form.save()
+        return rc.ALL_OK
+
 
 entry_handler = Resource(EntryHandler, authentication=auth)
 
