@@ -152,41 +152,35 @@ class EntryHandler(BaseHandler):
     anonymous = AnonymousEntryHandler
     model = anonymous.model
 
-    def _checkAllowed(self, user, request):
-        if user.server.hostname != settings.WIDIDIT_HOSTNAME:
+    def _checkAllowed(self, people, request):
+        if people.server.hostname != settings.WIDIDIT_HOSTNAME:
             # Want to change the password on another server?
             return rc.NOT_IMPLEMENTED
-        if user.user != request.user:
+        if people.user != request.user:
             return rc.FORBIDDEN
         return None
 
     @validate(EntryForm, 'POST')
     def create(self, request, usermask):
-        username, hostname = utils.usermask2tuple(usermask,
-                settings.WIDIDIT_HOSTNAME)
-        user = People.objects.get(username=username,
-                server=get_server(hostname))
-        reply = self._checkAllowed(user, request)
+        people = get_people(usermask)
+        reply = self._checkAllowed(people, request)
         if reply is not None:
             return reply
         data = request.form.cleaned_data
         entry = request.form.save(commit=False)
-        entry.author = user
+        entry.author = people
         entry.save()
         return rc.CREATED
 
     def update(self, request, usermask, id=None):
         if id is None:
             return rc.BAD_REQUEST
-        username, hostname = utils.usermask2tuple(usermask,
-                settings.WIDIDIT_HOSTNAME)
-        user = People.objects.get(username=username,
-                server=get_server(hostname))
-        reply = self._checkAllowed(user, request)
+        people = get_people(usermask)
+        reply = self._checkAllowed(people, request)
         if reply is not None:
             return reply
         try:
-            entry = Entry.objects.get(author=user, id=id)
+            entry = Entry.objects.get(author=people, id=id)
         except Entry.DoesNotExist:
             return rc.NOT_FOUND
         form = EntryForm(request.PUT, instance=entry)
