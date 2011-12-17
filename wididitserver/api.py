@@ -152,20 +152,13 @@ class EntryHandler(BaseHandler):
     anonymous = AnonymousEntryHandler
     model = anonymous.model
 
-    def _checkAllowed(self, people, request):
-        if people.server.hostname != settings.WIDIDIT_HOSTNAME:
-            # Want to change the password on another server?
-            return rc.NOT_IMPLEMENTED
-        if people.user != request.user:
-            return rc.FORBIDDEN
-        return None
-
     @validate(EntryForm, 'POST')
     def create(self, request, usermask):
         people = get_people(usermask)
-        reply = self._checkAllowed(people, request)
-        if reply is not None:
-            return reply
+        if not people.is_local():
+            return rc.NOT_IMPLEMENTED
+        if not people.can_edit(request.user):
+            return rc.FORBIDDEN
         data = request.form.cleaned_data
         entry = request.form.save(commit=False)
         entry.author = people
@@ -176,9 +169,10 @@ class EntryHandler(BaseHandler):
         if id is None:
             return rc.BAD_REQUEST
         people = get_people(usermask)
-        reply = self._checkAllowed(people, request)
-        if reply is not None:
-            return reply
+        if not people.is_local():
+            return rc.NOT_IMPLEMENTED
+        if not people.can_edit(request.user):
+            return rc.FORBIDDEN
         try:
             entry = Entry.objects.get(author=people, id=id)
         except Entry.DoesNotExist:

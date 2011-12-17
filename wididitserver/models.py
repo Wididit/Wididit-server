@@ -97,6 +97,9 @@ class People(models.Model):
         """Returns whether the people is registered on this server."""
         return self.server.is_self()
 
+    def can_edit(self, user):
+        return user.is_staff or user == self.user
+
     def __unicode__(self):
         return '%s@%s' % (self.username, self.server)
 
