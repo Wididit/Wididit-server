@@ -194,3 +194,20 @@ class TestEntry(TestCase):
         self.assertEqual(len(reply), 1)
         self.assertEqual(reply[0]['id2'], 1)
         self.assertEqual(reply[0]['content'], 'This is an editted test')
+
+    def testDelete(self):
+        c = Client()
+
+        response = c.post('/api/json/entry/tester/', {
+            'content': 'This is a test',
+            'generator': 'API tests',
+            'title': 'test',
+            }, **self.getExtras())
+        self.assertEqual(response.status_code, 201, response.content)
+
+        response = c.delete('/api/json/entry/tester/1/', **self.getExtras())
+        self.assertEqual(response.status_code, 204, response.content)
+        response = c.get('/api/json/entry/tester/')
+        self.assertEqual(response.status_code, 200, response.content)
+        reply = json.loads(response.content)
+        self.assertEqual(len(reply), 0)

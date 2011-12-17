@@ -149,7 +149,7 @@ class AnonymousEntryHandler(AnonymousBaseHandler):
                 return rc.NOT_FOUND
 
 class EntryHandler(BaseHandler):
-    allowed_methods = ('GET', 'POST', 'PUT',)
+    allowed_methods = ('GET', 'POST', 'PUT', 'DELETE')
     anonymous = AnonymousEntryHandler
     model = anonymous.model
 
@@ -183,6 +183,21 @@ class EntryHandler(BaseHandler):
             field.required = False
         form.save()
         return rc.ALL_OK
+
+    def delete(self, request, usermask, id=None):
+        if id is None:
+            return rc.BAD_REQUEST
+        people = get_people(usermask)
+        if not people.is_local():
+            return rc.NOT_IMPLEMENTED
+        if not people.can_edit(request.user):
+            return rc.FORBIDDEN
+        try:
+            entry = Entry.objects.get(author=people, id=id)
+        except Entry.DoesNotExist:
+            return rc.NOT_FOUND
+        entry.delete()
+        return rc.DELETED
 
 
 entry_handler = Resource(EntryHandler, authentication=auth)
