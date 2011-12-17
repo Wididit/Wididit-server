@@ -1,0 +1,8 @@
+Wididit is a distributed social network.
+Check out the doc at <http://wididit.github.com/>.
+
+Dependencies:
+* Python 2 (tested with 2.7)
+* Django (tested with 2.3)
+* haystack
+* The Wididit Python library
