@@ -75,14 +75,14 @@ class AnonymousPeopleHandler(AnonymousBaseHandler):
     model = People
     fields = ('username', 'server',)
 
-    def read(self, request, usermask=None):
+    def read(self, request, userid=None):
         """Returns either a list of all people registered, or the
         user matching the username (wildcard not allowed)."""
-        if usermask is None:
+        if userid is None:
             return People.objects.all()
         else:
             try:
-                return get_people(usermask)
+                return get_people(userid)
             except People.DoesNotExist:
                 return rc.NOT_FOUND
             except Server.DoesNotExist:
@@ -99,8 +99,8 @@ class PeopleHandler(BaseHandler):
     model = anonymous.model
     fields = anonymous.fields
 
-    def update(self, request, usermask):
-        people = get_people(usermask)
+    def update(self, request, userid):
+        people = get_people(userid)
         if not people.is_local():
             return rc.BAD_REQUEST
         if not people.can_edit(request.user):
@@ -126,19 +126,19 @@ class AnonymousEntryHandler(AnonymousBaseHandler):
     allowed_methods = ('GET',)
     model = Entry
 
-    def read(self, request, usermask=None, id=None):
+    def read(self, request, userid=None, id=None):
         """Returns either a list of notices (either from everybody if
-        `usermask` is not given, either from the `usermask`) or an entry if
-        `usermask` AND `id` are given."""
-        if usermask is not None:
+        `userid` is not given, either from the `userid`) or an entry if
+        `userid` AND `id` are given."""
+        if userid is not None:
             try:
-                user = get_people(usermask)
+                user = get_people(userid)
             except People.DoesNotExist:
                 return rc.NOT_FOUND
             except Server.DoesNotExist:
                 return rc.NOT_FOUND
 
-        if usermask is None and id is None:
+        if userid is None and id is None:
             # FIXME: limit this to a fixed number of results
             return Entry.objects.all()
         elif id is None: # and author is not None
@@ -156,8 +156,8 @@ class EntryHandler(BaseHandler):
     model = anonymous.model
 
     @validate(EntryForm, 'POST')
-    def create(self, request, usermask):
-        people = get_people(usermask)
+    def create(self, request, userid):
+        people = get_people(userid)
         if not people.is_local():
             return rc.NOT_IMPLEMENTED
         if not people.can_edit(request.user):
@@ -168,10 +168,10 @@ class EntryHandler(BaseHandler):
         entry.save()
         return rc.CREATED
 
-    def update(self, request, usermask, id=None):
+    def update(self, request, userid, id=None):
         if id is None:
             return rc.BAD_REQUEST
-        people = get_people(usermask)
+        people = get_people(userid)
         if not people.is_local():
             return rc.NOT_IMPLEMENTED
         if not people.can_edit(request.user):
@@ -186,10 +186,10 @@ class EntryHandler(BaseHandler):
         form.save()
         return rc.ALL_OK
 
-    def delete(self, request, usermask, id=None):
+    def delete(self, request, userid, id=None):
         if id is None:
             return rc.BAD_REQUEST
-        people = get_people(usermask)
+        people = get_people(userid)
         if not people.is_local():
             return rc.NOT_IMPLEMENTED
         if not people.can_edit(request.user):
@@ -210,9 +210,8 @@ class AnonymousEntrySearchHandler(AnonymousBaseHandler):
     def read(self, request):
         fields = dict(request.GET)
         query = SearchQuerySet().models(Entry)
-        if 'tags' in fields:
-            for tag in fields['tags'].split():
-                print repr(tag)
+        if 'tag' in fields:
+            for tag in fields['tag'].split():
                 tag_obj = Tag.objects.path_get(tag)
                 query = query.filter(tags__in=tag_obj)
         if 'content' in fields:
@@ -236,11 +235,10 @@ entry_search_handler = Resource(EntrySearchHandler, authentication=auth)
 urlpatterns = patterns('',
     url(r'^server/$', server_handler, name='wididit:server_list'),
     url(r'^people/$', people_handler, name='wididit:people_list'),
-    url(r'^people/(?P<usermask>%s)/$' % constants.USER_MIX_REGEXP, people_handler, name='wididit:show_people'),
+    url(r'^people/(?P<userid>%s)/$' % constants.USERID_MIX_REGEXP, people_handler, name='wididit:show_people'),
     url(r'^entry/$', entry_handler, name='wididit:entry_list_all'),
-    url(r'^entry/(?P<usermask>%s)/$' % constants.USER_MIX_REGEXP, entry_handler, name='wididit:entry_list_author'),
-    url(r'^entry/(?P<usermask>%s)/(?P<id>[0-9]+)/$' % constants.USER_MIX_REGEXP, entry_handler, name='wididit:show_entry'),
-    url(r'^entry/(?P<usermask>%s)/(?P<id>[0-9]+)/$' % constants.USER_MIX_REGEXP, entry_handler, name='wididit:show_entry'),
+    url(r'^entry/(?P<userid>%s)/$' % constants.USERID_MIX_REGEXP, entry_handler, name='wididit:entry_list_author'),
+    url(r'^entry/(?P<userid>%s)/(?P<id>[0-9]+)/$' % constants.USERID_MIX_REGEXP, entry_handler, name='wididit:show_entry'),
     url(r'^search/entry/$', entry_search_handler, name='wididit:search_entry'),
 )
 

@@ -47,8 +47,8 @@ def get_server(hostname=None):
         hostname = settings.WIDIDIT_HOSTNAME
     return Server.objects.get(hostname=hostname)
 
-def get_people(usermask):
-    username, servername = utils.usermask2tuple(usermask,
+def get_people(userid):
+    username, servername = utils.userid2tuple(userid,
             settings.WIDIDIT_HOSTNAME)
     server = get_server(servername)
     return People.objects.get(username=username, server=server)
