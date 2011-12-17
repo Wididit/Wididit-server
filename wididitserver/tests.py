@@ -211,3 +211,41 @@ class TestEntry(TestCase):
         self.assertEqual(response.status_code, 200, response.content)
         reply = json.loads(response.content)
         self.assertEqual(len(reply), 0)
+
+    def testSearch(self):
+        c = Client()
+
+        response = c.post('/api/json/entry/tester/', {
+            'content': 'This is a test',
+            'generator': 'API tests',
+            'title': 'test',
+            }, **self.getExtras())
+        self.assertEqual(response.status_code, 201, response.content)
+        response = c.post('/api/json/entry/tester2/', {
+            'content': 'This is a second test',
+            'generator': 'API tests',
+            'title': 'test',
+            }, **self.getExtras('tester2'))
+        self.assertEqual(response.status_code, 201, response.content)
+
+        response = c.get('/api/json/search/entry/?author=tester')
+        self.assertEqual(response.status_code, 200, response.content)
+        reply = json.loads(response.content)
+        self.assertEqual(len(reply), 1)
+        self.assertEqual(reply[0]['author']['username'], 'tester')
+
+        response = c.get('/api/json/search/entry/?content=tester')
+        self.assertEqual(response.status_code, 200, response.content)
+        reply = json.loads(response.content)
+        self.assertEqual(len(reply), 0)
+
+        response = c.get('/api/json/search/entry/?content=second')
+        self.assertEqual(response.status_code, 200, response.content)
+        reply = json.loads(response.content)
+        self.assertEqual(len(reply), 1)
+        self.assertEqual(reply[0]['author']['username'], 'tester2')
+
+        response = c.get('/api/json/search/entry/?content=second&author=tester')
+        self.assertEqual(response.status_code, 200, response.content)
+        reply = json.loads(response.content)
+        self.assertEqual(len(reply), 0)

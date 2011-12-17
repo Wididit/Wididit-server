@@ -23,6 +23,8 @@ from piston.resource import Resource
 from piston.utils import validate
 from piston.utils import rc
 
+from haystack.query import SearchQuerySet
+
 from wididit import constants
 from wididit import utils
 
@@ -199,8 +201,37 @@ class EntryHandler(BaseHandler):
         entry.delete()
         return rc.DELETED
 
-
 entry_handler = Resource(EntryHandler, authentication=auth)
+
+class AnonymousEntrySearchHandler(AnonymousBaseHandler):
+    allowed_methods = ('GET',)
+    model = Entry
+
+    def read(self, request):
+        fields = dict(request.GET)
+        query = SearchQuerySet().models(Entry)
+        if 'tags' in fields:
+            for tag in fields['tags'].split():
+                print repr(tag)
+                tag_obj = Tag.objects.path_get(tag)
+                query = query.filter(tags__in=tag_obj)
+        if 'content' in fields:
+            # Convert `?content=foo%20bar&content=baz` to
+            # `"foo bar" "baz"`
+            content = ' '.join(['"%s"' % x for x in fields['content']])
+            query = query.auto_query(content)
+        entries = [x.object for x in query]
+        if 'author' in fields:
+            authors = [get_people(x) for x in fields['author']]
+            entries = [x for x in entries
+                    if any([x.author == y for y in authors])]
+        return entries
+
+class EntrySearchHandler(BaseHandler):
+    anonymous = AnonymousEntrySearchHandler
+    model = anonymous.model
+
+entry_search_handler = Resource(EntrySearchHandler, authentication=auth)
 
 urlpatterns = patterns('',
     url(r'^server/$', server_handler, name='wididit:server_list'),
@@ -210,5 +241,6 @@ urlpatterns = patterns('',
     url(r'^entry/(?P<usermask>%s)/$' % constants.USER_MIX_REGEXP, entry_handler, name='wididit:entry_list_author'),
     url(r'^entry/(?P<usermask>%s)/(?P<id>[0-9]+)/$' % constants.USER_MIX_REGEXP, entry_handler, name='wididit:show_entry'),
     url(r'^entry/(?P<usermask>%s)/(?P<id>[0-9]+)/$' % constants.USER_MIX_REGEXP, entry_handler, name='wididit:show_entry'),
+    url(r'^search/entry/$', entry_search_handler, name='wididit:search_entry'),
 )
 

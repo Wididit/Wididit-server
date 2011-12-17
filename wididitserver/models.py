@@ -143,8 +143,27 @@ class PeopleForm(forms.ModelForm):
 ##########################################################################
 # Tag
 
+class TagManager(models.Manager):
+    def path_get(self, path):
+        """Get a Tag from its path."""
+        current_tag = None
+        for tag_name in path.split('#'):
+            if tag_name == '':
+                continue
+            try:
+                current_tag = self.get(name=tag_name, parent=current_tag)
+            except Tag.DoesNotExist:
+                current_tag = Tag(name=tag_name, parent=current_tag)
+                current_tag.save()
+        return current_tag
+
 class Tag(models.Model):
     name = models.CharField(max_length=constants.MAX_TAG_LENGTH)
+    parent = models.ForeignKey('self', null=True, blank=True)
+
+    class Meta:
+        verbose_name_plural = 'Entries'
+        unique_together = ('name', 'parent',)
 
 class TagAdmin(admin.ModelAdmin):
     pass
@@ -172,6 +191,10 @@ class Entry(models.Model, Atomizable):
     summary = models.TextField(null=True, blank=True)
     title = models.CharField(max_length=constants.MAX_TITLE_LENGTH)
     updated = models.TimeField(auto_now=True)
+
+    # Extra fields:
+    tags = models.ManyToManyField(Tag, related_name='tags',
+            null=True, blank=True)
 
     def __unicode__(self):
         return self.title

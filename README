@@ -16,3 +16,5 @@ What you have to add to a basic settings.py:
 	)
 
 	WIDIDIT_HOSTNAME = 'example.com'
+	HAYSTACK_SITECONF = 'wididitserver.search_sites'
+	HAYSTACK_SEARCH_ENGINE = 'simple'
