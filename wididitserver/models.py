@@ -132,7 +132,7 @@ class PeopleForm(forms.ModelForm):
                 people.server = get_server()
             people.save()
         else:
-            people = forms.ModelForm.save(self, commit, *args, **kwargs)
+            people = super(PeopleForm, self).save(self, commit, *args, **kwargs)
         return people
 
     class Meta:
