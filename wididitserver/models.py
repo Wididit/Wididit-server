@@ -117,12 +117,19 @@ class PeopleForm(forms.ModelForm):
     def save(self, commit=True, *args, **kwargs):
         if commit:
             data = self.cleaned_data
-            user = User.objects.create_user(data['username'], data['email'],
-                    data['password'])
-            user.save()
-            people = forms.ModelForm.save(self, commit, *args, **kwargs)
-            people.user = user
-            people.server = get_server()
+            people = super(PeopleForm, self).save(commit=commit,
+                    *args, **kwargs)
+            if people.user is None:
+                user = User.objects.create_user(data['username'], data['email'],
+                        data['password'])
+                user.save()
+                people.user = user
+            else:
+                people.user.set_password(data['password'])
+                people.user.email = data['email']
+                people.user.save()
+            if people.server is None:
+                people.server = get_server()
             people.save()
         else:
             people = forms.ModelForm.save(self, commit, *args, **kwargs)

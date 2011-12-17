@@ -97,20 +97,21 @@ class PeopleHandler(BaseHandler):
     model = anonymous.model
     fields = anonymous.fields
 
-    @validate(PeopleForm, 'PUT')
     def update(self, request, usermask):
-        user = get_people(usermask)
-        if not user.is_local():
+        people = get_people(usermask)
+        if not people.is_local():
             return rc.BAD_REQUEST
-        if user.username != request.user.username:
-            # Don't allow to edit other's account
+        if not people.can_edit(request.user):
             return rc.FORBIDDEN
-        data = request.form.cleaned_data
-        if user.username != data['username']:
+        form = PeopleForm(request.PUT, instance=people)
+        for field in form.fields.values():
+            field.required = False
+        if not form.is_valid():
+            return rc.BAD_REQUEST
+        if people.username != form.cleaned_data['username']:
             # We don't allow username changes
             return rc.FORBIDDEN
-        request.user.set_password(data['password'])
-        request.user.save()
+        form.save()
         return rc.ALL_OK
 
 people_handler = Resource(PeopleHandler, authentication=auth)
