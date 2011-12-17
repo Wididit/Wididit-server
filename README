@@ -6,3 +6,13 @@ Dependencies:
 * Django (tested with 2.3)
 * haystack
 * The Wididit Python library
+
+What you have to add to a basic settings.py:
+	INSTALLED_APPS = (
+	    'wididitserver',
+	    'south',
+	    'piston',
+	    'haystack',
+	)
+
+	WIDIDIT_HOSTNAME = 'example.com'
