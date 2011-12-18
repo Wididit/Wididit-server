@@ -144,7 +144,7 @@ class PeopleForm(forms.ModelForm):
 # Tag
 
 class TagManager(models.Manager):
-    def path_get(self, path):
+    def get_or_create_from_path(self, path):
         """Get a Tag from its path."""
         current_tag = None
         for tag_name in path.split('#'):
@@ -160,6 +160,22 @@ class TagManager(models.Manager):
 class Tag(models.Model):
     name = models.CharField(max_length=constants.MAX_TAG_LENGTH)
     parent = models.ForeignKey('self', null=True, blank=True)
+
+    objects = TagManager()
+
+    def belongs_to(self, other):
+        if self is other:
+            return True
+        elif self.parent is None:
+            return False
+        else:
+            return self.parent.belongs_to(other)
+
+    def __unicode__(self):
+        if self.parent is None:
+            return self.name
+        else:
+            return u''.join(self.parent, self.name)
 
     class Meta:
         verbose_name_plural = 'Entries'
@@ -195,6 +211,15 @@ class Entry(models.Model, Atomizable):
     # Extra fields:
     tags = models.ManyToManyField(Tag, related_name='tags',
             null=True, blank=True)
+
+    def save(self, *args, **kwargs):
+        # Prevent ValueError: 'Entry' instance needs to have a primary key
+        # value before a many-to-many relationship can be used.
+        super(Entry, self).save(*args, **kwargs)
+
+        tags = utils.get_tags(self.content)
+        self.tags = [Tag.objects.get_or_create_from_path(x) for x in tags]
+        super(Entry, self).save(*args, **kwargs)
 
     def __unicode__(self):
         return self.title
