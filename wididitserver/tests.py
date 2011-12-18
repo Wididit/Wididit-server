@@ -250,3 +250,34 @@ class TestEntry(TestCase):
         reply = json.loads(response.content)
         self.assertEqual(len(reply), 0)
 
+    def testPermissions(self):
+        c = Client()
+
+        response = c.post('/api/json/entry/tester/', {
+            'content': 'This is a test',
+            'generator': 'API tests',
+            'contributors': 'tester2',
+            'title': 'test',
+            }, **self.getExtras())
+        self.assertEqual(response.status_code, 201, response.content)
+
+        response = c.get('/api/json/entry/tester/1/')
+        self.assertEqual(response.status_code, 200, response.content)
+        reply = json.loads(response.content)
+        self.assertEqual(len(reply['contributors']), 1)
+        self.assertEqual(reply['contributors'][0]['username'], 'tester2')
+
+        response = c.put('/api/json/entry/tester/1/', {
+            'content': 'This is an editted test',
+            }, **self.getExtras('tester2'))
+        self.assertEqual(response.status_code, 200, response.content)
+
+        response = c.put('/api/json/entry/tester/1/', {
+            'contributors': []
+            }, **self.getExtras())
+        self.assertEqual(response.status_code, 200, response.content)
+
+        response = c.get('/api/json/entry/tester/1/')
+        self.assertEqual(response.status_code, 200, response.content)
+        reply = json.loads(response.content)
+        self.assertEqual(len(reply['contributors']), 0)

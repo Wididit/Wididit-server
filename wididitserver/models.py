@@ -217,9 +217,32 @@ class Entry(models.Model, Atomizable):
         # value before a many-to-many relationship can be used.
         super(Entry, self).save(*args, **kwargs)
 
+        if hasattr(self, '_contributors'):
+            for people in self._contributors:
+                self.contributors.add(people)
+
         tags = utils.get_tags(self.content)
         self.tags = [Tag.objects.get_or_create_from_path(x) for x in tags]
         super(Entry, self).save(*args, **kwargs)
+
+    def can_edit(self, people):
+        if people == self.author:
+            return True
+        else:
+            return people in self.contributors.all()
+
+    def add_contributor(self, people):
+        try:
+            self.contributors.add(people)
+        except ValueError:
+            # ValueError: 'Entry' instance needs to have a primary key
+            # value before a many-to-many relationship can be used.
+            if not hasattr(self, '_contributors'):
+                self._contributors = []
+            self._contributors.append(people)
+
+    def can_delete(self, people):
+        return people == self.author
 
     def __unicode__(self):
         return self.title
@@ -266,6 +289,21 @@ class EntryAdmin(admin.ModelAdmin):
 admin.site.register(Entry, EntryAdmin)
 
 class EntryForm(forms.ModelForm):
+    def __init__(self, data, *args, **kwargs):
+        if 'contributors' in data:
+            self._contributors = data['contributors'].split()
+            del data['contributors']
+        super(EntryForm, self).__init__(data, *args, **kwargs)
+
+    def save(self, commit=True, *args, **kwargs):
+        self.fields['contributors'].required = False
+        entry = super(EntryForm, self).save(commit, *args, **kwargs)
+        self.fields['contributors'].required = True
+        if hasattr(self, '_contributors'):
+            for userid in self._contributors:
+                entry.add_contributor(get_people(userid))
+        return entry
+
     class Meta:
         model = Entry
-        exclude = ('id2', 'author', 'contributors', 'published', 'updated')
+        exclude = ('id2', 'author', 'published', 'updated')
