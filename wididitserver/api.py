@@ -168,7 +168,7 @@ class AnonymousEntryHandler(AnonymousBaseHandler):
         elif id is None: # and author is not None
             return Entry.objects.filter(author=user)
         else:
-            assert id is not None and author is not None
+            assert id is not None and user is not None
             try:
                 return Entry.objects.get(author=user, id=id)
             except Entry.DoesNotExist:
@@ -203,12 +203,12 @@ class EntryHandler(BaseHandler):
         people = get_people(userid)
         if not people.is_local():
             return rc.NOT_IMPLEMENTED
-        if not people.can_edit(request.user):
-            return rc.FORBIDDEN
         try:
             entry = Entry.objects.get(author=people, id=id)
         except Entry.DoesNotExist:
             return rc.NOT_FOUND
+        if not entry.can_edit(people):
+            return rc.FORBIDDEN
         form = EntryForm(request.PUT, instance=entry)
         for field in form.fields.values():
             field.required = False
