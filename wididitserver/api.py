@@ -19,7 +19,6 @@ from django.http import HttpResponse
 
 from piston.authentication import OAuthAuthentication, HttpBasicAuthentication
 from piston.handler import BaseHandler, AnonymousBaseHandler
-from piston.resource import Resource
 from piston.utils import validate
 from piston.utils import rc
 from piston.models import Consumer, Token
@@ -35,6 +34,7 @@ from wididitserver.models import get_server, get_people
 from wididitserver.utils import settings
 from wididitserver.pistonextras import ConsumerForm, TokenForm
 from wididitserver.pistonextras import StrictOAuthAuthentication
+from wididitserver.pistonextras import CsrfExemptResource as Resource
 
 
 ##########################################################################
