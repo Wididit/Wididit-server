@@ -137,7 +137,7 @@ class PeopleForm(forms.ModelForm):
 
     class Meta:
         model = People
-        exclude = ('user',)
+        exclude = ('user', 'server',)
 
 
 ##########################################################################

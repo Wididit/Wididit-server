@@ -22,6 +22,7 @@ from piston.handler import BaseHandler, AnonymousBaseHandler
 from piston.resource import Resource
 from piston.utils import validate
 from piston.utils import rc
+from piston.models import Consumer, Token
 
 from haystack.query import SearchQuerySet
 
@@ -32,14 +33,16 @@ from wididitserver.models import Server, People, Entry, User
 from wididitserver.models import ServerForm, PeopleForm, EntryForm
 from wididitserver.models import get_server, get_people
 from wididitserver.utils import settings
+from wididitserver.pistonextras import ConsumerForm, TokenForm
+from wididitserver.pistonextras import StrictOAuthAuthentication
 
 
 ##########################################################################
 # Utils
 
-auth = HttpBasicAuthentication(realm='Wididit server')
-#auth = OAuthAuthentication(realm='Wididit server')
-
+http_auth = HttpBasicAuthentication(realm='Wididit server')
+oauth_auth = OAuthAuthentication(realm='Wididit server')
+auth = http_auth
 
 ##########################################################################
 # Server
@@ -117,6 +120,24 @@ class PeopleHandler(BaseHandler):
         return rc.ALL_OK
 
 people_handler = Resource(PeopleHandler, authentication=auth)
+
+##########################################################################
+# OAuth
+
+class ConsumerHandler(BaseHandler):
+    allowed_methods = ('POST',)
+    model = Consumer
+    fields = ('status', 'name', 'key', 'description', 'secret',)
+
+    @validate(ConsumerForm, 'POST')
+    def create(self, request):
+        consumer = request.form.save(commit=False)
+        consumer.user = request.user
+        consumer.generate_random_codes()
+        consumer.save()
+        return consumer
+
+consumer_handler = Resource(ConsumerHandler, authentication=http_auth)
 
 
 ##########################################################################
@@ -232,6 +253,19 @@ class EntrySearchHandler(BaseHandler):
 
 entry_search_handler = Resource(EntrySearchHandler, authentication=auth)
 
+##########################################################################
+# Whoami
+
+class WhoamiHandler(BaseHandler):
+    allowed_methods = ('GET',)
+    model = People
+    fields = PeopleHandler.fields
+
+    def read(self, request):
+        return request.user
+
+whoami_handler = Resource(WhoamiHandler, authentication=oauth_auth)
+
 urlpatterns = patterns('',
     url(r'^server/$', server_handler, name='wididit:server_list'),
     url(r'^people/$', people_handler, name='wididit:people_list'),
@@ -240,5 +274,7 @@ urlpatterns = patterns('',
     url(r'^entry/(?P<userid>%s)/$' % constants.USERID_MIX_REGEXP, entry_handler, name='wididit:entry_list_author'),
     url(r'^entry/(?P<userid>%s)/(?P<id>[0-9]+)/$' % constants.USERID_MIX_REGEXP, entry_handler, name='wididit:show_entry'),
     url(r'^search/entry/$', entry_search_handler, name='wididit:search_entry'),
+    url(r'^oauth/consumer/$', consumer_handler, name='wididit:consumer'),
+    url(r'^whoami/$', whoami_handler, name='wididit:whoami'),
 )
 
