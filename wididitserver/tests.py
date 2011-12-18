@@ -152,7 +152,7 @@ class TestEntry(TestCase):
         self.assertEqual(response.status_code, 200, response.content)
         reply = json.loads(response.content)
         self.assertEqual(len(reply), 1)
-        self.assertEqual(reply[0]['id2'], 1)
+        self.assertEqual(reply[0]['id'], 1)
         self.assertEqual(reply[0]['content'], 'This is a test')
         self.assertEqual(reply[0]['generator'], 'API tests')
         self.assertEqual(reply[0]['title'], 'test')
@@ -168,9 +168,9 @@ class TestEntry(TestCase):
         self.assertEqual(response.status_code, 200, response.content)
         reply = json.loads(response.content)
         self.assertEqual(len(reply), 2)
-        self.assertEqual(reply[0]['id2'], 1)
+        self.assertEqual(reply[0]['id'], 1)
         self.assertEqual(reply[0]['content'], 'This is a test')
-        self.assertEqual(reply[1]['id2'], 2)
+        self.assertEqual(reply[1]['id'], 2)
         self.assertEqual(reply[1]['content'], 'This is a second test')
 
     def testEdit(self):
@@ -192,7 +192,7 @@ class TestEntry(TestCase):
         self.assertEqual(response.status_code, 200, response.content)
         reply = json.loads(response.content)
         self.assertEqual(len(reply), 1)
-        self.assertEqual(reply[0]['id2'], 1)
+        self.assertEqual(reply[0]['id'], 1)
         self.assertEqual(reply[0]['content'], 'This is an editted test')
 
     def testDelete(self):
@@ -249,3 +249,4 @@ class TestEntry(TestCase):
         self.assertEqual(response.status_code, 200, response.content)
         reply = json.loads(response.content)
         self.assertEqual(len(reply), 0)
+

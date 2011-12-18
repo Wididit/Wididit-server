@@ -146,6 +146,9 @@ consumer_handler = Resource(ConsumerHandler, authentication=http_auth)
 class AnonymousEntryHandler(AnonymousBaseHandler):
     allowed_methods = ('GET',)
     model = Entry
+    fields = ('id', 'title', 'author', 'contributors',
+            'subtitle', 'summary', 'category', 'generator', 'rights', 'source',
+            'content',)
 
     def read(self, request, userid=None, id=None):
         """Returns either a list of notices (either from everybody if
@@ -171,10 +174,15 @@ class AnonymousEntryHandler(AnonymousBaseHandler):
             except Entry.DoesNotExist:
                 return rc.NOT_FOUND
 
+    @classmethod
+    def id(cls, entry):
+        return entry.id2
+
 class EntryHandler(BaseHandler):
     allowed_methods = ('GET', 'POST', 'PUT', 'DELETE')
     anonymous = AnonymousEntryHandler
     model = anonymous.model
+    fields = anonymous.fields
 
     @validate(EntryForm, 'POST')
     def create(self, request, userid):
@@ -222,11 +230,13 @@ class EntryHandler(BaseHandler):
         entry.delete()
         return rc.DELETED
 
+
 entry_handler = Resource(EntryHandler, authentication=auth)
 
 class AnonymousEntrySearchHandler(AnonymousBaseHandler):
     allowed_methods = ('GET',)
     model = Entry
+    fields = AnonymousEntryHandler.fields
 
     def read(self, request):
         fields = dict(request.GET)
@@ -250,6 +260,7 @@ class AnonymousEntrySearchHandler(AnonymousBaseHandler):
 class EntrySearchHandler(BaseHandler):
     anonymous = AnonymousEntrySearchHandler
     model = anonymous.model
+    fields = EntryHandler.fields
 
 entry_search_handler = Resource(EntrySearchHandler, authentication=auth)
 
