@@ -179,7 +179,6 @@ class Tag(models.Model):
             return u''.join(self.parent, self.name)
 
     class Meta:
-        verbose_name_plural = 'Entries'
         unique_together = ('name', 'parent',)
 
 class TagAdmin(admin.ModelAdmin):

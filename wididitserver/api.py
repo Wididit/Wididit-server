@@ -148,12 +148,12 @@ class AnonymousPeopleSubscriptionHandler(AnonymousBaseHandler):
     allowed_methods = ('GET',)
     model = PeopleSubscription
 
-    def read(self, request, userid, target=None):
+    def read(self, request, userid, targetid=None):
         subscriber = get_people(userid)
-        if target is None:
+        if targetid is None:
             return PeopleSubscription.objects.filter(subscriber=subscriber)
         else:
-            target = get_people(target)
+            target = get_people(targetid)
             try:
                 return PeopleSubscription.objects.get(
                         subscriber=subscriber,
@@ -168,6 +168,9 @@ class PeopleSubscriptionHandler(BaseHandler):
     anonymous = AnonymousPeopleSubscriptionHandler
     model = anonymous.model
     fields = anonymous.fields
+
+    def read(self, request, *args, **kwargs):
+        return self.anonymous().read(request, *args, **kwargs)
 
     @validate(PeopleSubscriptionForm, 'POST')
     def create(self, request, userid):
@@ -256,8 +259,8 @@ class AnonymousEntryHandler(AnonymousBaseHandler):
 
         # Display multiple entries
         query = SearchQuerySet().models(Entry)
-
         fields = dict(request.GET)
+
         if 'tag' in fields:
             for tag in fields['tag'].split():
                 tag_obj = Tag.objects.path_get(tag)
@@ -269,6 +272,18 @@ class AnonymousEntryHandler(AnonymousBaseHandler):
             query = query.auto_query(content)
 
         entries = [x.object for x in query]
+
+        if mode == 'timeline':
+            if request.user is None:
+                return rc.FORBIDDEN
+            try:
+                people = People.objects.get(user=request.user.id)
+            except People.DoesNotExist:
+                return rc.FORBIDDEN
+            authors = PeopleSubscription.objects.filter(subscriber=people)
+            authors = [x.target_people for x in authors]
+            entries = [x for x in entries
+                    if any([x.author == y for y in authors])]
 
         if 'author' in fields:
             authors = [get_people(x) for x in fields['author']]
@@ -285,6 +300,9 @@ class EntryHandler(BaseHandler):
     anonymous = AnonymousEntryHandler
     model = anonymous.model
     fields = anonymous.fields
+
+    def read(self, request, *args, **kwargs):
+        return self.anonymous().read(request, *args, **kwargs)
 
     @validate(EntryForm, 'POST')
     def create(self, request):
