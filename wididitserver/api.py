@@ -235,29 +235,46 @@ class AnonymousEntryHandler(AnonymousBaseHandler):
             'subtitle', 'summary', 'category', 'generator', 'rights', 'source',
             'content',)
 
-    def read(self, request, userid=None, id=None):
+    def read(self, request, mode=None, userid=None, entryid=None):
         """Returns either a list of notices (either from everybody if
         `userid` is not given, either from the `userid`) or an entry if
         `userid` AND `id` are given."""
-        if userid is not None:
-            try:
-                user = get_people(userid)
-            except People.DoesNotExist:
-                return rc.NOT_FOUND
-            except Server.DoesNotExist:
-                return rc.NOT_FOUND
 
-        if userid is None and id is None:
-            # FIXME: limit this to a fixed number of results
-            return Entry.objects.all()
-        elif id is None: # and author is not None
-            return Entry.objects.filter(author=user)
-        else:
-            assert id is not None and user is not None
+        # Display a single entry
+        if entryid is not None:
+            assert userid is not None
+            assert mode is None
+            if userid is not None:
+                try:
+                    user = get_people(userid)
+                except People.DoesNotExist:
+                    return rc.NOT_FOUND
             try:
-                return Entry.objects.get(author=user, id=id)
+                return Entry.objects.get(author=user, id2=entryid)
             except Entry.DoesNotExist:
                 return rc.NOT_FOUND
+
+        # Display multiple entries
+        query = SearchQuerySet().models(Entry)
+
+        fields = dict(request.GET)
+        if 'tag' in fields:
+            for tag in fields['tag'].split():
+                tag_obj = Tag.objects.path_get(tag)
+                query = query.filter(tags__in=tag_obj)
+        if 'content' in fields:
+            # Convert `?content=foo%20bar&content=baz` to
+            # `"foo bar" "baz"`
+            content = ' '.join(['"%s"' % x for x in fields['content']])
+            query = query.auto_query(content)
+
+        entries = [x.object for x in query]
+
+        if 'author' in fields:
+            authors = [get_people(x) for x in fields['author']]
+            entries = [x for x in entries
+                    if any([x.author == y for y in authors])]
+        return entries
 
     @classmethod
     def id(cls, entry):
@@ -270,8 +287,8 @@ class EntryHandler(BaseHandler):
     fields = anonymous.fields
 
     @validate(EntryForm, 'POST')
-    def create(self, request, userid):
-        people = get_people(userid)
+    def create(self, request):
+        people = People.objects.get(user=request.user)
         if not people.is_local():
             return rc.NOT_IMPLEMENTED
         if not people.can_edit(request.user):
@@ -282,14 +299,14 @@ class EntryHandler(BaseHandler):
         entry.save()
         return rc.CREATED
 
-    def update(self, request, userid, id=None):
+    def update(self, request, userid, entryid=None):
         if id is None:
             return rc.BAD_REQUEST
         people = get_people(userid)
         if not people.is_local():
             return rc.NOT_IMPLEMENTED
         try:
-            entry = Entry.objects.get(author=people, id=id)
+            entry = Entry.objects.get(author=people, id2=entryid)
         except Entry.DoesNotExist:
             return rc.NOT_FOUND
         if not entry.can_edit(people):
@@ -300,7 +317,7 @@ class EntryHandler(BaseHandler):
         form.save()
         return rc.ALL_OK
 
-    def delete(self, request, userid, id=None):
+    def delete(self, request, userid, entryid=None):
         if id is None:
             return rc.BAD_REQUEST
         people = get_people(userid)
@@ -309,7 +326,7 @@ class EntryHandler(BaseHandler):
         if not people.can_edit(request.user):
             return rc.FORBIDDEN
         try:
-            entry = Entry.objects.get(author=people, id=id)
+            entry = Entry.objects.get(author=people, id2=entryid)
         except Entry.DoesNotExist:
             return rc.NOT_FOUND
         entry.delete()
@@ -317,37 +334,6 @@ class EntryHandler(BaseHandler):
 
 
 entry_handler = Resource(EntryHandler, authentication=auth)
-
-class AnonymousEntrySearchHandler(AnonymousBaseHandler):
-    allowed_methods = ('GET',)
-    model = Entry
-    fields = AnonymousEntryHandler.fields
-
-    def read(self, request):
-        fields = dict(request.GET)
-        query = SearchQuerySet().models(Entry)
-        if 'tag' in fields:
-            for tag in fields['tag'].split():
-                tag_obj = Tag.objects.path_get(tag)
-                query = query.filter(tags__in=tag_obj)
-        if 'content' in fields:
-            # Convert `?content=foo%20bar&content=baz` to
-            # `"foo bar" "baz"`
-            content = ' '.join(['"%s"' % x for x in fields['content']])
-            query = query.auto_query(content)
-        entries = [x.object for x in query]
-        if 'author' in fields:
-            authors = [get_people(x) for x in fields['author']]
-            entries = [x for x in entries
-                    if any([x.author == y for y in authors])]
-        return entries
-
-class EntrySearchHandler(BaseHandler):
-    anonymous = AnonymousEntrySearchHandler
-    model = anonymous.model
-    fields = EntryHandler.fields
-
-entry_search_handler = Resource(EntrySearchHandler, authentication=auth)
 
 ##########################################################################
 # Whoami
@@ -377,13 +363,9 @@ urlpatterns = patterns('',
     url(r'^subscription/(?P<userid>%s)/tag/(?P<tag>#[^ /]+)/$' % constants.USERID_MIX_REGEXP, tag_subscription_handler, name='wididit:tag_subscription'),
 
     # Entries
-    url(r'^entry/(?P<mode>all)/$', entry_handler, name='wididit:entry_list_all'),
+    url(r'^entry/$', entry_handler, name='wididit:entry_list_all'),
     url(r'^entry/(?P<mode>timeline)/$', entry_handler, name='wididit:entry_timeline'),
-    url(r'^entry/(?P<userid>%s)/$' % constants.USERID_MIX_REGEXP, entry_handler, name='wididit:entry_list_author'),
-    url(r'^entry/(?P<userid>%s)/(?P<id>[0-9]+)/$' % constants.USERID_MIX_REGEXP, entry_handler, name='wididit:show_entry'),
-
-    # Search
-    url(r'^search/entry/$', entry_search_handler, name='wididit:search_entry'),
+    url(r'^entry/(?P<userid>%s)/(?P<entryid>[0-9]+)/$' % constants.USERID_MIX_REGEXP, entry_handler, name='wididit:show_entry'),
 
     # Utils
     url(r'^oauth/consumer/$', consumer_handler, name='wididit:consumer'),
