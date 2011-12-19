@@ -29,7 +29,9 @@ from wididit import constants
 from wididit import utils
 
 from wididitserver.models import Server, People, Entry, User
+from wididitserver.models import PeopleSubscription, TagSubscription
 from wididitserver.models import ServerForm, PeopleForm, EntryForm
+from wididitserver.models import PeopleSubscriptionForm, TagSubscriptionForm
 from wididitserver.models import get_server, get_people
 from wididitserver.utils import settings
 from wididitserver.pistonextras import ConsumerForm, TokenForm
@@ -138,6 +140,89 @@ class ConsumerHandler(BaseHandler):
         return consumer
 
 consumer_handler = Resource(ConsumerHandler, authentication=http_auth)
+
+##########################################################################
+# Subscription
+
+class AnonymousPeopleSubscriptionHandler(AnonymousBaseHandler):
+    allowed_methods = ('GET',)
+    model = PeopleSubscription
+
+    def read(self, request, userid, target=None):
+        subscriber = get_people(userid)
+        if target is None:
+            return PeopleSubscription.objects.filter(subscriber=subscriber)
+        else:
+            target = get_people(target)
+            try:
+                return PeopleSubscription.objects.get(
+                        subscriber=subscriber,
+                        target_people=target)
+            except PeopleSubscription.DoesNotExist:
+                return rc.NOT_FOUND
+            except People.DoesNotExist:
+                return rc.NOT_FOUND
+
+class PeopleSubscriptionHandler(BaseHandler):
+    allowed_methods = ('GET', 'POST',)
+    anonymous = AnonymousPeopleSubscriptionHandler
+    model = anonymous.model
+    fields = anonymous.fields
+
+    @validate(PeopleSubscriptionForm, 'POST')
+    def create(self, request, userid):
+        subscriber = get_people(userid)
+        if subscriber.user != request.user:
+            return rc.FORBIDDEN
+        subs = request.form.save(commit=False)
+        subs.subscriber = subscriber
+        subs.save()
+        return rc.CREATED
+
+people_subscription_handler = Resource(PeopleSubscriptionHandler,
+        authentication=auth)
+
+class AnonymousTagSubscriptionHandler(AnonymousBaseHandler):
+    allowed_methods = ('GET',)
+    model = TagSubscription
+
+    @classmethod
+    def target_tag(cls, subs):
+        return unicode(subs.target_tag)
+
+    def read(self, request, userid, target=None):
+        subscriber = get_people(userid)
+        if target is None:
+            return TagSubscription.objects.filter(subscriber=subscriber)
+        else:
+            target = get_people(target)
+            try:
+                return PeopleSubscription.objects.get(
+                        subscriber=subscriber,
+                        target_people=target)
+            except PeopleSubscription.DoesNotExist:
+                return rc.NOT_FOUND
+            except People.DoesNotExist:
+                return rc.NOT_FOUND
+
+class TagSubscriptionHandler(BaseHandler):
+    allowed_methods = ('GET', 'POST',)
+    anonymous = AnonymousTagSubscriptionHandler
+    model = anonymous.model
+    fields = anonymous.fields
+
+    @validate(TagSubscriptionForm, 'POST')
+    def create(self, request, userid):
+        subscriber = get_people(userid)
+        if subscriber.user != request.user:
+            return rc.FORBIDDEN
+        subs = request.form.save(commit=False)
+        subs.subscriber = subscriber
+        subs.save()
+        return rc.CREATED
+
+tag_subscription_handler = Resource(TagSubscriptionHandler,
+        authentication=auth)
 
 
 ##########################################################################
@@ -278,13 +363,29 @@ class WhoamiHandler(BaseHandler):
 whoami_handler = Resource(WhoamiHandler, authentication=oauth_auth)
 
 urlpatterns = patterns('',
+    # Server
     url(r'^server/$', server_handler, name='wididit:server_list'),
+
+    # People
     url(r'^people/$', people_handler, name='wididit:people_list'),
-    url(r'^people/(?P<userid>%s)/$' % constants.USERID_MIX_REGEXP, people_handler, name='wididit:show_people'),
-    url(r'^entry/$', entry_handler, name='wididit:entry_list_all'),
+    url(r'^people/(?P<userid>%s)/$' % constants.USERID_MIX_REGEXP, people_handler, name='wididit:people'),
+
+    # Subscription
+    url(r'^subscription/(?P<userid>%s)/people/$' % constants.USERID_MIX_REGEXP, people_subscription_handler, name='wididit:people_subscriptions_list'),
+    url(r'^subscription/(?P<userid>%s)/people/(?P<targetid>%s)/$' % (constants.USERID_MIX_REGEXP, constants.USERID_MIX_REGEXP), people_subscription_handler, name='wididit:people_subscription'),
+    url(r'^subscription/(?P<userid>%s)/tag/$' % constants.USERID_MIX_REGEXP, tag_subscription_handler, name='wididit:tag_subscriptions_list'),
+    url(r'^subscription/(?P<userid>%s)/tag/(?P<tag>#[^ /]+)/$' % constants.USERID_MIX_REGEXP, tag_subscription_handler, name='wididit:tag_subscription'),
+
+    # Entries
+    url(r'^entry/(?P<mode>all)/$', entry_handler, name='wididit:entry_list_all'),
+    url(r'^entry/(?P<mode>timeline)/$', entry_handler, name='wididit:entry_timeline'),
     url(r'^entry/(?P<userid>%s)/$' % constants.USERID_MIX_REGEXP, entry_handler, name='wididit:entry_list_author'),
     url(r'^entry/(?P<userid>%s)/(?P<id>[0-9]+)/$' % constants.USERID_MIX_REGEXP, entry_handler, name='wididit:show_entry'),
+
+    # Search
     url(r'^search/entry/$', entry_search_handler, name='wididit:search_entry'),
+
+    # Utils
     url(r'^oauth/consumer/$', consumer_handler, name='wididit:consumer'),
     url(r'^whoami/$', whoami_handler, name='wididit:whoami'),
 )

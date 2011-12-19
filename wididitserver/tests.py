@@ -281,3 +281,62 @@ class TestEntry(TestCase):
         self.assertEqual(response.status_code, 200, response.content)
         reply = json.loads(response.content)
         self.assertEqual(len(reply['contributors']), 0)
+
+class TestSubscription(TestCase):
+    def getExtras(self, user='tester'):
+        return {'HTTP_AUTHORIZATION': get_token(user, 'foo')}
+
+    def setUp(self):
+        c = Client()
+
+        response = c.post('/api/json/people/', {
+            'username': 'tester',
+            'email': 'tester@wididit.net',
+            'password': 'foo'})
+        self.assertEqual(response.status_code, 201, response.content)
+        response = c.post('/api/json/people/', {
+            'username': 'tester2',
+            'email': 'tester2@wididit.net',
+            'password': 'foo'})
+        self.assertEqual(response.status_code, 201, response.content)
+        response = c.post('/api/json/people/', {
+            'username': 'tester3',
+            'email': 'tester2@wididit.net',
+            'password': 'foo'})
+        self.assertEqual(response.status_code, 201, response.content)
+
+    def testPeople(self):
+        c = Client()
+
+        response = c.get('/api/json/subscription/tester/people/')
+        self.assertEqual(response.status_code, 200, response.content)
+        reply = json.loads(response.content)
+        self.assertEqual(len(reply), 0)
+
+        response = c.post('/api/json/subscription/tester/people/', {
+            'target_people': 'tester2'}, **self.getExtras())
+        self.assertEqual(response.status_code, 201, response.content)
+
+        response = c.get('/api/json/subscription/tester/people/')
+        self.assertEqual(response.status_code, 200, response.content)
+        reply = json.loads(response.content)
+        self.assertEqual(len(reply), 1)
+        self.assertEqual(reply[0]['target_people']['username'], 'tester2')
+
+    def testTag(self):
+        c = Client()
+
+        response = c.get('/api/json/subscription/tester/tag/')
+        self.assertEqual(response.status_code, 200, response.content)
+        reply = json.loads(response.content)
+        self.assertEqual(len(reply), 0)
+
+        response = c.post('/api/json/subscription/tester/tag/', {
+            'target_tag': '#foo'}, **self.getExtras())
+        self.assertEqual(response.status_code, 201, response.content)
+
+        response = c.get('/api/json/subscription/tester/tag/')
+        self.assertEqual(response.status_code, 200, response.content)
+        reply = json.loads(response.content)
+        self.assertEqual(len(reply), 1)
+        self.assertEqual(reply[0]['target_tag'], '#foo')

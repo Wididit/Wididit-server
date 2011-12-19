@@ -28,6 +28,7 @@ from django.db.models.signals import post_save
 from wididit import constants, utils
 
 from wididitserver.utils import settings
+from wididitserver.fields import PeopleField, TagField
 
 
 ##########################################################################
@@ -173,7 +174,7 @@ class Tag(models.Model):
 
     def __unicode__(self):
         if self.parent is None:
-            return self.name
+            return '#' + self.name
         else:
             return u''.join(self.parent, self.name)
 
@@ -307,3 +308,44 @@ class EntryForm(forms.ModelForm):
     class Meta:
         model = Entry
         exclude = ('id2', 'author', 'published', 'updated')
+
+
+##########################################################################
+# Subscription
+
+class Subscription(models.Model):
+    subscriber = models.ForeignKey(People, related_name='%(class)s_subscriber')
+
+    tag_blacklist = models.TextField(default='', blank=True)
+
+    class Meta:
+        abstract = True
+
+class SubscriptionForm(forms.ModelForm):
+    pass
+
+class PeopleSubscription(Subscription):
+    target_people = models.ForeignKey(People, related_name='target_people')
+
+    tag_whitelist = models.TextField(blank=True, null=True)
+
+    class Meta:
+        unique_together = ('subscriber', 'target_people')
+
+class PeopleSubscriptionForm(SubscriptionForm):
+    target_people = PeopleField(People)
+
+    class Meta:
+        model = PeopleSubscription
+        exclude = ('subscriber',)
+
+class TagSubscription(Subscription):
+    target_tag = models.ForeignKey(Tag, related_name='target_tag')
+
+class TagSubscriptionForm(SubscriptionForm):
+    target_tag = TagField(Tag)
+    class Meta:
+        model = TagSubscription
+        unique_together = ('subscriber', 'target_tag')
+        exclude = ('subscriber',)
+
