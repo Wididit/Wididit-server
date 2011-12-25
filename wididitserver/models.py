@@ -204,12 +204,17 @@ class Entry(models.Model, Atomizable):
             help_text='Client used to post this entry.', blank=True)
     published = models.DateTimeField(auto_now_add=True)
     rights = models.TextField(blank=True)
-    source = models.ForeignKey('self', null=True, blank=True)
+    source = models.ForeignKey('self', null=True, blank=True,
+            related_name='entry_source')
     subtitle = models.CharField(max_length=constants.MAX_SUBTITLE_LENGTH,
             null=True, blank=True)
     summary = models.TextField(null=True, blank=True)
     title = models.CharField(max_length=constants.MAX_TITLE_LENGTH)
     updated = models.DateTimeField(auto_now=True)
+
+    # Fields specified in RFC 4685 (Atom Threading Extensions)
+    in_reply_to = models.ForeignKey('self', null=True, blank=True,
+            related_name='entry_in-reply-to')
 
     # Extra fields:
     tags = models.ManyToManyField(Tag, related_name='tags',

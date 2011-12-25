@@ -194,7 +194,7 @@ class AnonymousEntryHandler(AnonymousBaseHandler):
     model = Entry
     fields = ('id', 'title', 'author', 'contributors',
             'subtitle', 'summary', 'category', 'generator', 'rights', 'source',
-            'content',)
+            'content', 'in_reply_to',)
 
     def read(self, request, mode=None, userid=None, entryid=None):
         """Returns either a list of notices (either from everybody if
@@ -275,7 +275,10 @@ class EntryHandler(BaseHandler):
         return self.anonymous().read(request, *args, **kwargs)
 
     @validate(EntryForm, 'POST')
-    def create(self, request):
+    def create(self, request, userid=None, entryid=None):
+        if (userid is None and entryid is not None) or \
+                (userid is not None and entryid is None):
+            return rc.BAD_REQUEST
         people = People.objects.get(user=request.user)
         if not people.is_local():
             return rc.NOT_IMPLEMENTED
@@ -284,6 +287,13 @@ class EntryHandler(BaseHandler):
         data = request.form.cleaned_data
         entry = request.form.save(commit=False)
         entry.author = people
+        if userid is not None:
+            assert entryid is not None
+            try:
+                entry.in_reply_to = Entry.objects.get(author=get_people(userid),
+                        id2=entryid)
+            except Entry.DoesNotExist:
+                return rc.NOT_FOUND
         entry.save()
         return rc.CREATED
 

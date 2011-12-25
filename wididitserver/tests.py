@@ -270,6 +270,37 @@ class TestEntry(TestCase):
         reply = json.loads(response.content)
         self.assertEqual(len(reply['contributors']), 0)
 
+    def testThreads(self):
+        c = Client()
+
+        response = c.post('/api/json/entry/', {
+            'content': 'This is a test',
+            'generator': 'API tests',
+            'title': 'test',
+            }, **self.getExtras())
+        self.assertEqual(response.status_code, 201, response.content)
+
+        response = c.get('/api/json/entry/?author=tester')
+        self.assertEqual(response.status_code, 200, response.content)
+        reply = json.loads(response.content)
+        self.assertEqual(len(reply), 1)
+
+        response = c.post('/api/json/entry/tester/1/', {
+            'content': 'another test',
+            'generator': 'API tests',
+            'title': 'test',
+            }, **self.getExtras())
+        self.assertEqual(response.status_code, 201, response.content)
+
+        response = c.get('/api/json/entry/?author=tester')
+        self.assertEqual(response.status_code, 200, response.content)
+        reply = json.loads(response.content)
+        self.assertEqual(len(reply), 2)
+        self.assertEqual(reply[1]['id'], 2)
+        self.assertEqual(reply[1]['in_reply_to']['id'], 1)
+
+
+
 class TestSubscription(TestCase):
     def getExtras(self, user='tester'):
         return {'HTTP_AUTHORIZATION': get_token(user, 'foo')}
