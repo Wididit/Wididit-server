@@ -196,7 +196,7 @@ class AnonymousEntryHandler(AnonymousBaseHandler):
             'subtitle', 'summary', 'category', 'generator', 'rights', 'source',
             'content', 'in_reply_to',)
 
-    def read(self, request, mode=None, userid=None, entryid=None):
+    def read(self, request, mode=None, userid=None, entryid=None, extra=None):
         """Returns either a list of notices (either from everybody if
         `userid` is not given, either from the `userid`) or an entry if
         `userid` AND `id` are given."""
@@ -211,9 +211,13 @@ class AnonymousEntryHandler(AnonymousBaseHandler):
                 except People.DoesNotExist:
                     return rc.NOT_FOUND
             try:
-                return Entry.objects.get(author=user, id2=entryid)
+                entry = Entry.objects.get(author=user, id2=entryid)
             except Entry.DoesNotExist:
                 return rc.NOT_FOUND
+            if extra == 'replies':
+                return Entry.objects.filter(in_reply_to=entry)
+            else:
+                return entry
 
         # Display multiple entries
         query = SearchQuerySet().models(Entry)
@@ -362,6 +366,7 @@ urlpatterns = patterns('',
     url(r'^entry/$', entry_handler, name='wididit:entry_list_all'),
     url(r'^entry/(?P<mode>timeline)/$', entry_handler, name='wididit:entry_timeline'),
     url(r'^entry/(?P<userid>%s)/(?P<entryid>[0-9]+)/$' % constants.USERID_MIX_REGEXP, entry_handler, name='wididit:show_entry'),
+    url(r'^entry/(?P<userid>%s)/(?P<entryid>[0-9]+)/(?P<extra>replies)/$' % constants.USERID_MIX_REGEXP, entry_handler, name='wididit:show_entry'),
 
     # Utils
     url(r'^oauth/consumer/$', consumer_handler, name='wididit:consumer'),

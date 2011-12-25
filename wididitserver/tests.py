@@ -299,6 +299,14 @@ class TestEntry(TestCase):
         self.assertEqual(reply[1]['id'], 2)
         self.assertEqual(reply[1]['in_reply_to']['id'], 1)
 
+        response = c.get('/api/json/entry/tester/1/replies/')
+        self.assertEqual(response.status_code, 200, response.content)
+        reply = json.loads(response.content)
+        self.assertEqual(len(reply), 1)
+        self.assertEqual(reply[0]['id'], 2)
+        self.assertEqual(reply[0]['in_reply_to']['id'], 1)
+
+
 
 
 class TestSubscription(TestCase):
