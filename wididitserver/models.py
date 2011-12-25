@@ -341,13 +341,3 @@ class PeopleSubscriptionForm(SubscriptionForm):
         model = PeopleSubscription
         exclude = ('subscriber',)
 
-class TagSubscription(Subscription):
-    target_tag = models.ForeignKey(Tag, related_name='target_tag')
-
-class TagSubscriptionForm(SubscriptionForm):
-    target_tag = TagField(Tag)
-    class Meta:
-        model = TagSubscription
-        unique_together = ('subscriber', 'target_tag')
-        exclude = ('subscriber',)
-

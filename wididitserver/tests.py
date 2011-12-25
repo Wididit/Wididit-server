@@ -343,21 +343,3 @@ class TestSubscription(TestCase):
         self.assertEqual(response.status_code, 200, response.content)
         reply = json.loads(response.content)
         self.assertEqual(len(reply), 1)
-
-    def testTag(self):
-        c = Client()
-
-        response = c.get('/api/json/subscription/tester/tag/')
-        self.assertEqual(response.status_code, 200, response.content)
-        reply = json.loads(response.content)
-        self.assertEqual(len(reply), 0)
-
-        response = c.post('/api/json/subscription/tester/tag/', {
-            'target_tag': '#foo'}, **self.getExtras())
-        self.assertEqual(response.status_code, 201, response.content)
-
-        response = c.get('/api/json/subscription/tester/tag/')
-        self.assertEqual(response.status_code, 200, response.content)
-        reply = json.loads(response.content)
-        self.assertEqual(len(reply), 1)
-        self.assertEqual(reply[0]['target_tag'], '#foo')
