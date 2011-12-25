@@ -102,6 +102,9 @@ class People(models.Model):
         return user.is_staff or user == self.user
 
     def __unicode__(self):
+        return self.userid()
+
+    def userid(self):
         return '%s@%s' % (self.username, self.server)
 
     class Meta:
@@ -199,14 +202,14 @@ class Entry(models.Model, Atomizable):
             null=True, blank=True)
     generator = models.CharField(max_length=constants.MAX_GENERATOR_LENGTH,
             help_text='Client used to post this entry.', blank=True)
-    published = models.TimeField(auto_now_add=True)
+    published = models.DateTimeField(auto_now_add=True)
     rights = models.TextField(blank=True)
     source = models.ForeignKey('self', null=True, blank=True)
     subtitle = models.CharField(max_length=constants.MAX_SUBTITLE_LENGTH,
             null=True, blank=True)
     summary = models.TextField(null=True, blank=True)
     title = models.CharField(max_length=constants.MAX_TITLE_LENGTH)
-    updated = models.TimeField(auto_now=True)
+    updated = models.DateTimeField(auto_now=True)
 
     # Extra fields:
     tags = models.ManyToManyField(Tag, related_name='tags',

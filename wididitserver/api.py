@@ -271,8 +271,8 @@ class AnonymousEntryHandler(AnonymousBaseHandler):
             content = ' '.join(['"%s"' % x for x in fields['content']])
             query = query.auto_query(content)
 
-        entries = [x.object for x in query]
 
+        assert_authors = []
         if mode == 'timeline':
             if request.user is None:
                 return rc.FORBIDDEN
@@ -282,14 +282,26 @@ class AnonymousEntryHandler(AnonymousBaseHandler):
                 return rc.FORBIDDEN
             authors = PeopleSubscription.objects.filter(subscriber=people)
             authors = [x.target_people for x in authors]
-            entries = [x for x in entries
-                    if any([x.author == y for y in authors])]
+            query = query.filter(author__in=authors)
+            assert_authors.extend(authors)
 
         if 'author' in fields:
             authors = [get_people(x) for x in fields['author']]
-            entries = [x for x in entries
-                    if any([x.author == y for y in authors])]
-        return entries
+            query = query.filter(author__in=authors)
+            assert_authors.extend(authors)
+
+        query = query.order_by('updated')
+
+        # prevent `Object could not be found in database for SearchResult`
+        class FakeLogger:
+            def error(self, *args, **kwargs):
+                pass
+        fakelogger = FakeLogger()
+        for x in query:
+            x.log = fakelogger
+
+        return [x.object for x in query if x.object is not None]
+
 
     @classmethod
     def id(cls, entry):
