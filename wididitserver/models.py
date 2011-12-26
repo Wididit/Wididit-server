@@ -253,7 +253,7 @@ class Entry(models.Model, Atomizable):
         return people == self.author
 
     def __unicode__(self):
-        return self.title
+        return '%s/%s' % (self.author, self.id2)
 
     class Meta:
         verbose_name_plural = 'Entries'
