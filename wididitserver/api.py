@@ -196,7 +196,7 @@ class AnonymousEntryHandler(AnonymousBaseHandler):
             'subtitle', 'summary', 'category', 'generator', 'rights', 'source',
             'content', 'in_reply_to',)
 
-    def read(self, request, mode=None, userid=None, entryid=None, extra=None):
+    def read(self, request, mode=None, userid=None, entryid=None):
         """Returns either a list of notices (either from everybody if
         `userid` is not given, either from the `userid`) or an entry if
         `userid` AND `id` are given."""
@@ -211,13 +211,12 @@ class AnonymousEntryHandler(AnonymousBaseHandler):
                 except People.DoesNotExist:
                     return rc.NOT_FOUND
             try:
-                entry = Entry.objects.get(author=user, id2=entryid)
+                return Entry.objects.get(author=user, id2=entryid)
             except Entry.DoesNotExist:
                 return rc.NOT_FOUND
-            if extra == 'replies':
-                return Entry.objects.filter(in_reply_to=entry)
-            else:
-                return entry
+
+        # objects that will be called before returning results
+        post_run = []
 
         # Display multiple entries
         query = SearchQuerySet().models(Entry)
@@ -232,6 +231,24 @@ class AnonymousEntryHandler(AnonymousBaseHandler):
             # `"foo bar" "baz"`
             content = ' '.join(['"%s"' % x for x in fields['content']])
             query = query.auto_query(content)
+        if 'in_reply_to' in fields:
+            if len(fields['in_reply_to']) != 1:
+                return rc.BAD_REQUEST
+            try:
+                userid, entryid = fields['in_reply_to'][0].split('/')
+                people = get_people(userid)
+                entry = Entry.objects.get(author=people, id2=entryid)
+            except Entry.DoesNotExist:
+                return rc.NOT_FOUND
+            except People.DoesNotExist:
+                return rc.NOT_FOUND
+            query = query.filter(in_reply_to__exact=entry)
+            query = query.exclude(in_reply_to=None)
+
+            IN_REPLY_TO = entry
+            def remove_unwanted_entries(entries):
+                return [x for x in entries if x.in_reply_to == IN_REPLY_TO]
+            post_run.append(remove_unwanted_entries)
 
 
         assert_authors = []
@@ -262,7 +279,10 @@ class AnonymousEntryHandler(AnonymousBaseHandler):
         for x in query:
             x.log = fakelogger
 
-        return [x.object for x in query if x.object is not None]
+        entries = [x.object for x in query if x.object is not None]
+        for callback in post_run:
+            entries = callback(entries)
+        return entries
 
 
     @classmethod
@@ -366,7 +386,6 @@ urlpatterns = patterns('',
     url(r'^entry/$', entry_handler, name='wididit:entry_list_all'),
     url(r'^entry/(?P<mode>timeline)/$', entry_handler, name='wididit:entry_timeline'),
     url(r'^entry/(?P<userid>%s)/(?P<entryid>[0-9]+)/$' % constants.USERID_MIX_REGEXP, entry_handler, name='wididit:show_entry'),
-    url(r'^entry/(?P<userid>%s)/(?P<entryid>[0-9]+)/(?P<extra>replies)/$' % constants.USERID_MIX_REGEXP, entry_handler, name='wididit:show_entry'),
 
     # Utils
     url(r'^oauth/consumer/$', consumer_handler, name='wididit:consumer'),

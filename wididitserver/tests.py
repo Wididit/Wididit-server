@@ -296,17 +296,41 @@ class TestEntry(TestCase):
         self.assertEqual(response.status_code, 200, response.content)
         reply = json.loads(response.content)
         self.assertEqual(len(reply), 2)
+        self.assertEqual(reply[0]['id'], 1)
+        self.assertEqual(reply[0]['in_reply_to'], None)
         self.assertEqual(reply[1]['id'], 2)
         self.assertEqual(reply[1]['in_reply_to']['id'], 1)
 
-        response = c.get('/api/json/entry/tester/1/replies/')
+        response = c.get('/api/json/entry/?in_reply_to=tester/1')
         self.assertEqual(response.status_code, 200, response.content)
         reply = json.loads(response.content)
         self.assertEqual(len(reply), 1)
         self.assertEqual(reply[0]['id'], 2)
         self.assertEqual(reply[0]['in_reply_to']['id'], 1)
 
+        response = c.post('/api/json/entry/tester/1/', {
+            'content': 'another test',
+            'generator': 'API tests',
+            'title': 'test',
+            }, **self.getExtras())
+        self.assertEqual(response.status_code, 201, response.content)
 
+        response = c.get('/api/json/entry/?in_reply_to=tester/1')
+        self.assertEqual(response.status_code, 200, response.content)
+        reply = json.loads(response.content)
+        self.assertEqual(len(reply), 2)
+
+        response = c.post('/api/json/entry/tester/2/', {
+            'content': 'another test',
+            'generator': 'API tests',
+            'title': 'test',
+            }, **self.getExtras())
+        self.assertEqual(response.status_code, 201, response.content)
+
+        response = c.get('/api/json/entry/?in_reply_to=tester/1')
+        self.assertEqual(response.status_code, 200, response.content)
+        reply = json.loads(response.content)
+        self.assertEqual(len(reply), 2)
 
 
 class TestSubscription(TestCase):
