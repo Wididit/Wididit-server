@@ -251,7 +251,11 @@ class AnonymousEntryHandler(AnonymousBaseHandler):
             post_run.append(remove_unwanted_entries)
 
 
-        assert_authors = []
+        if 'shared' in fields:
+            if len(fields['shared']) != 1:
+                return rc.BAD_REQUEST
+            enable_shared = bool(fields['shared'][0])
+
         if mode == 'timeline':
             if request.user is None:
                 return rc.FORBIDDEN
@@ -262,12 +266,10 @@ class AnonymousEntryHandler(AnonymousBaseHandler):
             authors = PeopleSubscription.objects.filter(subscriber=people)
             authors = [x.target_people for x in authors]
             query = query.filter(author__in=authors)
-            assert_authors.extend(authors)
 
         if 'author' in fields:
             authors = [get_people(x) for x in fields['author']]
             query = query.filter(author__in=authors)
-            assert_authors.extend(authors)
 
         query = query.order_by('updated')
 

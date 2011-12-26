@@ -14,6 +14,31 @@ from django.test.client import Client
 def get_token(login, password):
     return 'Basic ' + base64.b64encode(':'.join([login, password]))
 
+class WididitTestCase(TestCase):
+    def getExtras(self, user='tester'):
+        return {'HTTP_AUTHORIZATION': get_token(user, 'foo')}
+
+    def setUp(self):
+        c = Client()
+
+        response = c.post('/api/json/people/', {
+            'username': 'tester',
+            'email': 'tester@wididit.net',
+            'password': 'foo'})
+        self.assertEqual(response.status_code, 201, response.content)
+        response = c.post('/api/json/people/', {
+            'username': 'tester2',
+            'email': 'tester2@wididit.net',
+            'password': 'foo'})
+        self.assertEqual(response.status_code, 201, response.content)
+        response = c.post('/api/json/people/', {
+            'username': 'tester3',
+            'email': 'tester2@wididit.net',
+            'password': 'foo'})
+        self.assertEqual(response.status_code, 201, response.content)
+
+
+
 class TestPeople(TestCase):
     def test_creation(self):
         c = Client()
@@ -107,24 +132,7 @@ class TestPeople(TestCase):
         self.assertNotIn('email', reply[0])
         self.assertNotIn('user', reply[0])
 
-class TestEntry(TestCase):
-    def getExtras(self, user='tester'):
-        return {'HTTP_AUTHORIZATION': get_token(user, 'foo')}
-
-    def setUp(self):
-        c = Client()
-
-        response = c.post('/api/json/people/', {
-            'username': 'tester',
-            'email': 'tester@wididit.net',
-            'password': 'foo'})
-        self.assertEqual(response.status_code, 201, response.content)
-        response = c.post('/api/json/people/', {
-            'username': 'tester2',
-            'email': 'tester2@wididit.net',
-            'password': 'foo'})
-        self.assertEqual(response.status_code, 201, response.content)
-
+class TestEntry(WididitTestCase):
     def testPost(self):
         c = Client()
 
@@ -333,29 +341,7 @@ class TestEntry(TestCase):
         self.assertEqual(len(reply), 2)
 
 
-class TestSubscription(TestCase):
-    def getExtras(self, user='tester'):
-        return {'HTTP_AUTHORIZATION': get_token(user, 'foo')}
-
-    def setUp(self):
-        c = Client()
-
-        response = c.post('/api/json/people/', {
-            'username': 'tester',
-            'email': 'tester@wididit.net',
-            'password': 'foo'})
-        self.assertEqual(response.status_code, 201, response.content)
-        response = c.post('/api/json/people/', {
-            'username': 'tester2',
-            'email': 'tester2@wididit.net',
-            'password': 'foo'})
-        self.assertEqual(response.status_code, 201, response.content)
-        response = c.post('/api/json/people/', {
-            'username': 'tester3',
-            'email': 'tester2@wididit.net',
-            'password': 'foo'})
-        self.assertEqual(response.status_code, 201, response.content)
-
+class TestSubscription(WididitTestCase):
     def testPeople(self):
         c = Client()
 
@@ -406,3 +392,4 @@ class TestSubscription(TestCase):
         self.assertEqual(response.status_code, 200, response.content)
         reply = json.loads(response.content)
         self.assertEqual(len(reply), 1)
+

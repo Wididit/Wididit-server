@@ -346,3 +346,14 @@ class PeopleSubscriptionForm(SubscriptionForm):
         model = PeopleSubscription
         exclude = ('subscriber',)
 
+
+##########################################################################
+# Share
+
+class Share(models.Model):
+    entry = models.ForeignKey(Entry)
+    people = models.ForeignKey(People)
+    timestamp = models.DateTimeField()
+
+    class Meta:
+        unique_together = ('entry', 'people',)
