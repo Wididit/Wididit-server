@@ -26,10 +26,10 @@ from piston.models import Consumer, Token
 from wididit import constants
 from wididit import utils
 
-from wididitserver.models import Server, People, Entry, User
+from wididitserver.models import Server, People, Entry, User, Share
 from wididitserver.models import PeopleSubscription
 from wididitserver.models import ServerForm, PeopleForm, EntryForm
-from wididitserver.models import PeopleSubscriptionForm
+from wididitserver.models import PeopleSubscriptionForm, ShareForm
 from wididitserver.models import get_server, get_people
 from wididitserver.utils import settings
 import wididitserver.utils as serverutils
@@ -193,7 +193,7 @@ class AnonymousEntryHandler(AnonymousBaseHandler):
     model = Entry
     fields = ('id', 'title', 'author', 'contributors',
             'subtitle', 'summary', 'category', 'generator', 'rights', 'source',
-            'content', 'in_reply_to',)
+            'content', 'in_reply_to', 'shared_by',)
 
     def read(self, request, mode=None, userid=None, entryid=None):
         """Returns either a list of notices (either from everybody if
@@ -214,12 +214,64 @@ class AnonymousEntryHandler(AnonymousBaseHandler):
             except Entry.DoesNotExist:
                 return rc.NOT_FOUND
 
-        # objects that will be called before returning results
-        post_run = []
-
         # Display multiple entries
-        query = Entry.objects.all()
         fields = dict(request.GET)
+
+
+        enable_shared = False
+        if 'shared' in fields:
+            enable_shared = True
+        enable_native = True
+        if 'nonative' in fields:
+            enable_native = False
+        if (enable_shared, enable_native) == (False, False):
+            # Why should we query the database for that?
+            return []
+
+        if mode == 'timeline':
+            if request.user is None:
+                return rc.FORBIDDEN
+            try:
+                people = People.objects.get(user=request.user.id)
+            except People.DoesNotExist:
+                return rc.FORBIDDEN
+
+            query = Entry.objects.none()
+            query_native = query_shared = Entry.objects.none()
+            authors = PeopleSubscription.objects.filter(subscriber=people)
+            authors = [x.target_people for x in authors]
+
+            if enable_native:
+                query_native = Entry.objects.filter(author__in=authors)
+
+            if enable_shared:
+                shares = Share.objects.filter(people__in=authors)
+                entryids = [x.entry.id for x in shares]
+                query_shared = Entry.objects.filter(id__in=entryids)
+
+            query = query_native or query_shared
+        else:
+            if enable_native:
+                # Obviously, all shared entries also exist as native
+                query = Entry.objects.all()
+            else:
+                assert enable_shared, 'Run memcheck!'
+                entryids = [x.entry.id for x in Share.objects.all()]
+                query = Entry.objects.filter(id__in=entryids)
+
+        if 'author' in fields:
+            query_native = query_shared = Entry.objects.none()
+
+            authors = [get_people(x) for x in fields['author']]
+            if enable_native:
+                query_native = query.filter(author__in=authors)
+
+            if enable_shared:
+                shares = Share.objects.filter(people__in=authors)
+                entryids = [x.entry.id for x in shares]
+                query_shared = Entry.objects.filter(id__in=entryids)
+
+            query = query_native or query_shared
 
         if 'tag' in fields:
             for tag in fields['tag'].split():
@@ -244,32 +296,6 @@ class AnonymousEntryHandler(AnonymousBaseHandler):
             query = query.filter(in_reply_to__exact=entry)
             query = query.exclude(in_reply_to=None)
 
-            IN_REPLY_TO = entry
-            def remove_unwanted_entries(entries):
-                return [x for x in entries if x.in_reply_to == IN_REPLY_TO]
-            post_run.append(remove_unwanted_entries)
-
-
-        if 'shared' in fields:
-            if len(fields['shared']) != 1:
-                return rc.BAD_REQUEST
-            enable_shared = bool(fields['shared'][0])
-
-        if mode == 'timeline':
-            if request.user is None:
-                return rc.FORBIDDEN
-            try:
-                people = People.objects.get(user=request.user.id)
-            except People.DoesNotExist:
-                return rc.FORBIDDEN
-            authors = PeopleSubscription.objects.filter(subscriber=people)
-            authors = [x.target_people for x in authors]
-            query = query.filter(author__in=authors)
-
-        if 'author' in fields:
-            authors = [get_people(x) for x in fields['author']]
-            query = query.filter(author__in=authors)
-
         query = query.order_by('updated')
 
         # prevent `Object could not be found in database for SearchResult`
@@ -286,6 +312,10 @@ class AnonymousEntryHandler(AnonymousBaseHandler):
     @classmethod
     def id(cls, entry):
         return entry.id2
+
+    @classmethod
+    def shared_by(cls, entry):
+        return [x.people for x in Share.objects.filter(entry=entry)]
 
 class EntryHandler(BaseHandler):
     allowed_methods = ('GET', 'POST', 'PUT', 'DELETE')
@@ -352,8 +382,26 @@ class EntryHandler(BaseHandler):
         entry.delete()
         return rc.DELETED
 
-
 entry_handler = Resource(EntryHandler, authentication=auth)
+
+##########################################################################
+# Share
+
+class ShareHandler(BaseHandler):
+    allowed_methods = ('POST',)
+    model = Share
+
+    @validate(ShareForm, 'POST')
+    def create(self, request):
+        share = request.form.save(commit=False)
+        try:
+            share.people = People.objects.get(user=request.user)
+        except People.DoesNotExist:
+            return rc.FORBIDDEN
+        share.save()
+        return rc.CREATED
+
+share_handler = Resource(ShareHandler, authentication=auth)
 
 ##########################################################################
 # Whoami
@@ -384,6 +432,9 @@ urlpatterns = patterns('',
     url(r'^entry/$', entry_handler, name='wididit:entry_list_all'),
     url(r'^entry/(?P<mode>timeline)/$', entry_handler, name='wididit:entry_timeline'),
     url(r'^entry/(?P<userid>%s)/(?P<entryid>[0-9]+)/$' % constants.USERID_MIX_REGEXP, entry_handler, name='wididit:show_entry'),
+
+    # Shares
+    url(r'^share/$', share_handler, name='wididit:share_index'),
 
     # Utils
     url(r'^oauth/consumer/$', consumer_handler, name='wididit:consumer'),

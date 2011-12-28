@@ -28,7 +28,7 @@ from django.db.models.signals import post_save
 from wididit import constants, utils
 
 from wididitserver.utils import settings
-from wididitserver.fields import PeopleField, TagField
+from wididitserver.fields import EntryField, PeopleField, TagField
 
 
 ##########################################################################
@@ -317,6 +317,7 @@ class EntryForm(forms.ModelForm):
         exclude = ('id2', 'author', 'published', 'updated')
 
 
+
 ##########################################################################
 # Subscription
 
@@ -353,7 +354,17 @@ class PeopleSubscriptionForm(SubscriptionForm):
 class Share(models.Model):
     entry = models.ForeignKey(Entry)
     people = models.ForeignKey(People)
-    timestamp = models.DateTimeField()
+    timestamp = models.DateTimeField(auto_now=True)
+
+    def __unicode__(self):
+        return '%s by %s' % (self.entry, self.people)
 
     class Meta:
         unique_together = ('entry', 'people',)
+
+class ShareForm(forms.ModelForm):
+    entry = EntryField(Entry)
+
+    class Meta:
+        model = Share
+        exclude = ('people', 'timestamp',)

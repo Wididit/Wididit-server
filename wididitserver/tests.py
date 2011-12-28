@@ -340,6 +340,51 @@ class TestEntry(WididitTestCase):
         reply = json.loads(response.content)
         self.assertEqual(len(reply), 2)
 
+    def testShare(self):
+        c = Client()
+
+        response = c.post('/api/json/entry/', {
+            'content': 'This is a test',
+            'generator': 'API tests',
+            'title': 'test',
+            }, **self.getExtras())
+        self.assertEqual(response.status_code, 201, response.content)
+
+        response = c.post('/api/json/entry/', {
+            'content': 'This is a second test',
+            'generator': 'API tests',
+            'title': 'test',
+            }, **self.getExtras())
+        self.assertEqual(response.status_code, 201, response.content)
+
+        response = c.post('/api/json/entry/', {
+            'content': 'This is a third test',
+            'generator': 'API tests',
+            'title': 'test',
+            }, **self.getExtras('tester2'))
+        self.assertEqual(response.status_code, 201, response.content)
+
+        response = c.post('/api/json/share/', {
+            'entry': 'tester/2',
+            }, **self.getExtras('tester3'))
+        self.assertEqual(response.status_code, 201, response.content)
+
+        response = c.get('/api/json/entry/?nonative&shared')
+        self.assertEqual(response.status_code, 200, response.content)
+        reply = json.loads(response.content)
+        self.assertEqual(len(reply), 1)
+        self.assertEqual(reply[0]['content'], 'This is a second test')
+
+        response = c.get('/api/json/entry/?nonative')
+        self.assertEqual(response.status_code, 200, response.content)
+        reply = json.loads(response.content)
+        self.assertEqual(len(reply), 0)
+
+        response = c.get('/api/json/entry/?shared')
+        self.assertEqual(response.status_code, 200, response.content)
+        reply = json.loads(response.content)
+        self.assertEqual(len(reply), 3)
+
 
 class TestSubscription(WididitTestCase):
     def testPeople(self):
@@ -389,6 +434,51 @@ class TestSubscription(WididitTestCase):
         self.assertEqual(response.status_code, 201, response.content)
 
         response = c.get('/api/json/entry/timeline/', **self.getExtras())
+        self.assertEqual(response.status_code, 200, response.content)
+        reply = json.loads(response.content)
+        self.assertEqual(len(reply), 1)
+
+    def testShare(self):
+        c = Client()
+
+        response = c.post('/api/json/entry/', {
+            'content': 'This is a test',
+            'generator': 'API tests',
+            'title': 'test',
+            }, **self.getExtras())
+        self.assertEqual(response.status_code, 201, response.content)
+
+        response = c.post('/api/json/entry/', {
+            'content': 'This is a second test',
+            'generator': 'API tests',
+            'title': 'test',
+            }, **self.getExtras())
+        self.assertEqual(response.status_code, 201, response.content)
+
+        response = c.post('/api/json/entry/', {
+            'content': 'This is a third test',
+            'generator': 'API tests',
+            'title': 'test',
+            }, **self.getExtras('tester2'))
+        self.assertEqual(response.status_code, 201, response.content)
+
+        response = c.post('/api/json/share/', {
+            'entry': 'tester/2',
+            }, **self.getExtras('tester3'))
+        self.assertEqual(response.status_code, 201, response.content)
+
+        response = c.get('/api/json/entry/timeline/?nonative&shared',
+                **self.getExtras())
+        self.assertEqual(response.status_code, 200, response.content)
+        reply = json.loads(response.content)
+        self.assertEqual(len(reply), 0)
+
+        response = c.post('/api/json/subscription/tester/people/', {
+            'target_people': 'tester3'}, **self.getExtras())
+        self.assertEqual(response.status_code, 201, response.content)
+
+        response = c.get('/api/json/entry/timeline/?nonative&shared',
+                **self.getExtras())
         self.assertEqual(response.status_code, 200, response.content)
         reply = json.loads(response.content)
         self.assertEqual(len(reply), 1)
