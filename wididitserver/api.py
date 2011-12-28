@@ -77,7 +77,7 @@ server_handler = Resource(ServerHandler, authentication=auth)
 class AnonymousPeopleHandler(AnonymousBaseHandler):
     allowed_methods = ('GET', 'POST',)
     model = People
-    fields = ('username', 'server',)
+    fields = ('username', 'server', 'biography',)
 
     def read(self, request, userid=None):
         """Returns either a list of all people registered, or the

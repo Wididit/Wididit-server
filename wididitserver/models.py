@@ -93,6 +93,7 @@ class People(models.Model):
             help_text='If this people is registered on this server, '
             'this is the associated User instance of this people.',
             blank=True, null=True)
+    biography = models.TextField(default='', blank=True)
 
     def is_local(self):
         """Returns whether the people is registered on this server."""
