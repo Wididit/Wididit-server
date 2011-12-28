@@ -23,8 +23,6 @@ from piston.utils import validate
 from piston.utils import rc
 from piston.models import Consumer, Token
 
-from haystack.query import SearchQuerySet
-
 from wididit import constants
 from wididit import utils
 
@@ -34,6 +32,7 @@ from wididitserver.models import ServerForm, PeopleForm, EntryForm
 from wididitserver.models import PeopleSubscriptionForm
 from wididitserver.models import get_server, get_people
 from wididitserver.utils import settings
+import wididitserver.utils as serverutils
 from wididitserver.pistonextras import ConsumerForm, TokenForm
 from wididitserver.pistonextras import StrictOAuthAuthentication
 from wididitserver.pistonextras import CsrfExemptResource as Resource
@@ -219,7 +218,7 @@ class AnonymousEntryHandler(AnonymousBaseHandler):
         post_run = []
 
         # Display multiple entries
-        query = SearchQuerySet().models(Entry)
+        query = Entry.objects.all()
         fields = dict(request.GET)
 
         if 'tag' in fields:
@@ -230,7 +229,7 @@ class AnonymousEntryHandler(AnonymousBaseHandler):
             # Convert `?content=foo%20bar&content=baz` to
             # `"foo bar" "baz"`
             content = ' '.join(['"%s"' % x for x in fields['content']])
-            query = query.auto_query(content)
+            query = serverutils.auto_query(query, content)
         if 'in_reply_to' in fields:
             if len(fields['in_reply_to']) != 1:
                 return rc.BAD_REQUEST
@@ -281,10 +280,7 @@ class AnonymousEntryHandler(AnonymousBaseHandler):
         for x in query:
             x.log = fakelogger
 
-        entries = [x.object for x in query if x.object is not None]
-        for callback in post_run:
-            entries = callback(entries)
-        return entries
+        return query
 
 
     @classmethod
