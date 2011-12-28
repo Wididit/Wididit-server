@@ -217,7 +217,6 @@ class AnonymousEntryHandler(AnonymousBaseHandler):
         # Display multiple entries
         fields = dict(request.GET)
 
-
         enable_shared = False
         if 'shared' in fields:
             enable_shared = True
@@ -229,15 +228,20 @@ class AnonymousEntryHandler(AnonymousBaseHandler):
             return []
 
         if mode == 'timeline':
+            # Display (shared?) entries from people the user subscribed to.
+
             if request.user is None:
+                # We need to know who you are.
                 return rc.FORBIDDEN
             try:
                 people = People.objects.get(user=request.user.id)
             except People.DoesNotExist:
+                # Authenticated, but not a people.
                 return rc.FORBIDDEN
 
-            query = Entry.objects.none()
             query_native = query_shared = Entry.objects.none()
+
+            # The list of people we subscribed to.
             authors = PeopleSubscription.objects.filter(subscriber=people)
             authors = [x.target_people for x in authors]
 
@@ -249,13 +253,15 @@ class AnonymousEntryHandler(AnonymousBaseHandler):
                 entryids = [x.entry.id for x in shares]
                 query_shared = Entry.objects.filter(id__in=entryids)
 
+            # Merge results.
             query = query_native or query_shared
         else:
             if enable_native:
                 # Obviously, all shared entries also exist as native
                 query = Entry.objects.all()
             else:
-                assert enable_shared, 'Run memcheck!'
+                assert enable_shared, 'Run memcheck! enable_native and ' +\
+                        'enable_shared weren\'t both False before.'
                 entryids = [x.entry.id for x in Share.objects.all()]
                 query = Entry.objects.filter(id__in=entryids)
 
@@ -277,11 +283,13 @@ class AnonymousEntryHandler(AnonymousBaseHandler):
             for tag in fields['tag'].split():
                 tag_obj = Tag.objects.path_get(tag)
                 query = query.filter(tags__in=tag_obj)
+
         if 'content' in fields:
             # Convert `?content=foo%20bar&content=baz` to
             # `"foo bar" "baz"`
             content = ' '.join(['"%s"' % x for x in fields['content']])
             query = serverutils.auto_query(query, content)
+
         if 'in_reply_to' in fields:
             if len(fields['in_reply_to']) != 1:
                 return rc.BAD_REQUEST
@@ -297,14 +305,6 @@ class AnonymousEntryHandler(AnonymousBaseHandler):
             query = query.exclude(in_reply_to=None)
 
         query = query.order_by('updated')
-
-        # prevent `Object could not be found in database for SearchResult`
-        class FakeLogger:
-            def error(self, *args, **kwargs):
-                pass
-        fakelogger = FakeLogger()
-        for x in query:
-            x.log = fakelogger
 
         return query
 
