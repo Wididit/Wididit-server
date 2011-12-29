@@ -1,20 +1,71 @@
 Wididit is a distributed social network.
 Check out the doc at <http://wididit.github.com/>.
 
-Dependencies:
+Dependencies
+============
+
 * Python 2 (tested with 2.7)
 * Django (tested with 2.3)
 * haystack
 * The Wididit Python library
 
-What you have to add to a basic settings.py:
+settings.py
+===========
+
+Here what should a base settings.py contain (plus the standard things)
+
 	INSTALLED_APPS = (
 	    'wididitserver',
 	    'south',
 	    'piston',
-	    'haystack',
 	)
 
 	WIDIDIT_HOSTNAME = 'example.com'
-	HAYSTACK_SITECONF = 'wididitserver.search_sites'
-	HAYSTACK_SEARCH_ENGINE = 'simple'
+	PISTON_IGNORE_DUPE_MODELS = True
+
+Web server configuration
+========================
+
+Never use the Django development server in production!
+
+Apache
+------
+
+And here is a sample Apache configuration:
+
+	<VirtualHost 0.0.0.0:80>
+		ServerName dev.progval.42
+
+		DocumentRoot /home/progval/workspace/wididit/server/
+		WSGIScriptAlias / /home/progval/workspace/wididit/server/django.wsgi
+		Alias /static/admin/ /usr/lib/python2.7/dist-packages/django/contrib/admin/media/
+		WSGIPassAuthorization On
+
+		<Directory "/home/progval/workspace/wididit/server/">
+			Options Indexes MultiViews FollowSymLinks ExecCGI
+			Order allow,deny
+			Allow from all
+		</Directory>
+		<Location /static>
+			SetHandler none
+		</Location>
+
+		TransferLog /var/log/apache2/dev.progval.42.log
+	</VirtualHost>
+
+Don't forget to set `WSGIPassAuthorization on`! If you don't Apache will strip
+HTTP Authorization headers, and the API will be read only.
+
+And the associated django.wsgi file:
+
+	import os
+	import sys
+
+	path = '/home/progval/workspace/wididit/server'
+	if path not in sys.path:
+	    sys.path.append(path)
+
+	os.environ['DJANGO_SETTINGS_MODULE'] = 'settings'
+
+	import django.core.handlers.wsgi
+	application = django.core.handlers.wsgi.WSGIHandler()
