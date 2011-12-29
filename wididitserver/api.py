@@ -417,7 +417,7 @@ class WhoamiHandler(BaseHandler):
     fields = PeopleHandler.fields
 
     def read(self, request):
-        return request.user
+        return People.objects.get(user=request.user)
 
 whoami_handler = Resource(WhoamiHandler, authentication=auth)
 
