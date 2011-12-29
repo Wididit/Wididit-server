@@ -86,7 +86,7 @@ class ServerForm(forms.ModelForm):
 class People(models.Model):
     server = models.ForeignKey(Server,
             help_text='The server to where this people is register.',
-            null=True, blank=True)
+            default=get_server)
     username = models.CharField(max_length=constants.MAX_USERNAME_LENGTH,
             validators=[validate_username])
     user = models.OneToOneField(User,
@@ -120,24 +120,20 @@ class PeopleForm(forms.ModelForm):
     email = forms.EmailField()
 
     def save(self, commit=True, *args, **kwargs):
-        if commit:
-            data = self.cleaned_data
-            people = super(PeopleForm, self).save(commit=commit,
-                    *args, **kwargs)
-            if people.user is None:
-                user = User.objects.create_user(data['username'], data['email'],
-                        data['password'])
-                user.save()
-                people.user = user
-            else:
-                people.user.set_password(data['password'])
-                people.user.email = data['email']
-                people.user.save()
-            if people.server is None:
-                people.server = get_server()
-            people.save()
+        data = self.cleaned_data
+        if self.instance is None:
+            people = super(PeopleForm, self).save(commit=commit, *args, **kwargs)
         else:
-            people = super(PeopleForm, self).save(self, commit, *args, **kwargs)
+            people = self.instance
+        if people.user is None:
+            user = User.objects.create_user(data['username'], data['email'],
+                    data['password'])
+            user.save()
+            people.user = user
+        else:
+            people.user.set_password(data['password'])
+            people.user.email = data['email']
+            people.user.save()
         return people
 
     class Meta:

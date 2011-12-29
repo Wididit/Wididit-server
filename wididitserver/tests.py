@@ -85,7 +85,11 @@ class TestPeople(TestCase):
             'password': 'foo2'})
         self.assertEqual(response.status_code, 401, response.content)
 
-        c.login(login='tester', password='foo')
+        response = c.get('/api/json/people/tester/')
+        self.assertEqual(response.status_code, 200, response.content)
+        reply = json.loads(response.content)
+        self.assertEqual(reply['username'], 'tester')
+
         response = c.put('/api/json/people/tester/', {
             'username': 'tester',
             'email': 'foo@wididit.net',
@@ -110,6 +114,13 @@ class TestPeople(TestCase):
             'password': 'foo'},
             HTTP_AUTHORIZATION=get_token('tester', 'foo2'))
         self.assertEqual(response.status_code, 200, response.content)
+
+        response = c.put('/api/json/people/tester/', {
+            'username': 'tester2',
+            'email': 'foo@wididit.net',
+            'password': 'foo'},
+            HTTP_AUTHORIZATION=get_token('tester', 'foo'))
+        self.assertEqual(response.status_code, 401, response.content)
 
         response = c.put('/api/json/people/tester2/', {
             'username': 'tester2',
@@ -187,6 +198,8 @@ class TestEntry(WididitTestCase):
 
         response = c.put('/api/json/entry/tester/1/', {
             'content': 'This is an editted test',
+            'generator': 'API tests',
+            'title': 'test',
             }, **self.getExtras())
         self.assertEqual(response.status_code, 200, response.content)
 
@@ -195,6 +208,7 @@ class TestEntry(WididitTestCase):
         reply = json.loads(response.content)
         self.assertEqual(len(reply), 1)
         self.assertEqual(reply[0]['id'], 1)
+        self.assertEqual(reply[0]['title'], 'test')
         self.assertEqual(reply[0]['content'], 'This is an editted test')
 
     def testDelete(self):
@@ -265,11 +279,17 @@ class TestEntry(WididitTestCase):
 
         response = c.put('/api/json/entry/tester/1/', {
             'content': 'This is an editted test',
+            'generator': 'API tests',
+            'contributors': 'tester2',
+            'title': 'test',
             }, **self.getExtras('tester2'))
         self.assertEqual(response.status_code, 200, response.content)
 
         response = c.put('/api/json/entry/tester/1/', {
-            'contributors': []
+            'content': 'This is an editted test',
+            'generator': 'API tests',
+            'contributors': [],
+            'title': 'test',
             }, **self.getExtras())
         self.assertEqual(response.status_code, 200, response.content)
 

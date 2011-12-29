@@ -77,7 +77,7 @@ server_handler = Resource(ServerHandler, authentication=auth)
 class AnonymousPeopleHandler(AnonymousBaseHandler):
     allowed_methods = ('GET', 'POST',)
     model = People
-    fields = ('username', 'server', 'biography',)
+    fields = ('username', 'server', 'biography')
 
     def read(self, request, userid=None):
         """Returns either a list of all people registered, or the
@@ -94,7 +94,9 @@ class AnonymousPeopleHandler(AnonymousBaseHandler):
 
     @validate(PeopleForm, 'POST')
     def create(self, request):
-        request.form.save()
+        people = request.form.save(commit=False)
+        # FIXME: if creating a remote user, make sure he exists.
+        people.save()
         return rc.CREATED
 
 class PeopleHandler(BaseHandler):
@@ -103,21 +105,26 @@ class PeopleHandler(BaseHandler):
     model = anonymous.model
     fields = anonymous.fields
 
+    def read(self, request, **kwargs):
+        return self.anonymous().read(request, **kwargs)
+    def create(self, request, **kwargs):
+        return self.anonymous().read(request, **kwargs)
+
     def update(self, request, userid):
         people = get_people(userid)
+        userid = people.userid()
         if not people.is_local():
             return rc.BAD_REQUEST
         if not people.can_edit(request.user):
             return rc.FORBIDDEN
         form = PeopleForm(request.PUT, instance=people)
-        for field in form.fields.values():
-            field.required = False
         if not form.is_valid():
             return rc.BAD_REQUEST
-        if people.username != form.cleaned_data['username']:
-            # We don't allow username changes
+        if userid != people.userid():
+            # people.userid() got a new value because of PeopleForm(instance=).
+            # We shouldn't allow that!
             return rc.FORBIDDEN
-        form.save()
+        people = form.save()
         return rc.ALL_OK
 
 people_handler = Resource(PeopleHandler, authentication=auth)
@@ -230,7 +237,7 @@ class AnonymousEntryHandler(AnonymousBaseHandler):
         if mode == 'timeline':
             # Display (shared?) entries from people the user subscribed to.
 
-            if request.user is None:
+            if request.user is None or request.user.id is None:
                 # We need to know who you are.
                 return rc.FORBIDDEN
             try:
@@ -362,8 +369,6 @@ class EntryHandler(BaseHandler):
         if not entry.can_edit(people):
             return rc.FORBIDDEN
         form = EntryForm(request.PUT, instance=entry)
-        for field in form.fields.values():
-            field.required = False
         form.save()
         return rc.ALL_OK
 
@@ -414,7 +419,7 @@ class WhoamiHandler(BaseHandler):
     def read(self, request):
         return request.user
 
-whoami_handler = Resource(WhoamiHandler, authentication=oauth_auth)
+whoami_handler = Resource(WhoamiHandler, authentication=auth)
 
 urlpatterns = patterns('',
     # Server
