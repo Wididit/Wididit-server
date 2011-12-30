@@ -197,15 +197,17 @@ class Entry(models.Model, Atomizable):
     id2 = models.IntegerField(null=True, blank=True)
     content = models.TextField()
     author = models.ForeignKey(People, related_name='author')
-    category = models.ForeignKey(Tag, blank=True, null=True)
+    #category = models.ForeignKey(Category, blank=True, null=True)
+    category = models.TextField(default='', blank=True)
     contributors = models.ManyToManyField(People, related_name='contributors',
             null=True, blank=True)
     generator = models.CharField(max_length=constants.MAX_GENERATOR_LENGTH,
             help_text='Client used to post this entry.', blank=True)
     published = models.DateTimeField(auto_now_add=True)
     rights = models.TextField(blank=True)
-    source = models.ForeignKey('self', null=True, blank=True,
-            related_name='entry_source')
+    #source = models.ForeignKey('self', null=True, blank=True,
+    #        related_name='entry_source')
+    source = models.TextField(default='', blank=True)
     subtitle = models.CharField(max_length=constants.MAX_SUBTITLE_LENGTH,
             null=True, blank=True)
     summary = models.TextField(null=True, blank=True)
@@ -225,6 +227,7 @@ class Entry(models.Model, Atomizable):
         # value before a many-to-many relationship can be used.
         super(Entry, self).save(*args, **kwargs)
 
+        self.contributors = []
         if hasattr(self, '_contributors'):
             for people in self._contributors:
                 self.contributors.add(people)
@@ -305,11 +308,13 @@ class EntryForm(forms.ModelForm):
 
     def save(self, commit=True, *args, **kwargs):
         self.fields['contributors'].required = False
-        entry = super(EntryForm, self).save(commit, *args, **kwargs)
+        entry = super(EntryForm, self).save(commit=False, *args, **kwargs)
         self.fields['contributors'].required = True
         if hasattr(self, '_contributors'):
             for userid in self._contributors:
                 entry.add_contributor(get_people(userid))
+        if commit:
+            entry.save()
         return entry
 
     class Meta:
