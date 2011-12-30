@@ -97,7 +97,10 @@ class AnonymousPeopleHandler(AnonymousBaseHandler):
         people = request.form.save(commit=False)
         # FIXME: if creating a remote user, make sure he exists.
         people.save()
-        return rc.CREATED
+
+        response = rc.CREATED
+        response.content = str(people.userid())
+        return response
 
 class PeopleHandler(BaseHandler):
     allowed_methods = ('GET', 'POST', 'PUT',)
@@ -355,7 +358,10 @@ class EntryHandler(BaseHandler):
             except Entry.DoesNotExist:
                 return rc.NOT_FOUND
         entry.save()
-        return rc.CREATED
+
+        response = rc.CREATED
+        response.content = str(entry.id)
+        return response
 
     def update(self, request, userid, entryid=None):
         if id is None:
