@@ -125,6 +125,7 @@ class PeopleHandler(BaseHandler):
             # We shouldn't allow that!
             return rc.FORBIDDEN
         people = form.save()
+        people.save()
         return rc.ALL_OK
 
 people_handler = Resource(PeopleHandler, authentication=auth)
