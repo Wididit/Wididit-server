@@ -116,8 +116,8 @@ class PeopleAdmin(admin.ModelAdmin):
 admin.site.register(People, PeopleAdmin)
 
 class PeopleForm(forms.ModelForm):
-    password = forms.CharField(widget=forms.PasswordInput)
-    email = forms.EmailField()
+    password = forms.CharField(widget=forms.PasswordInput, required=False)
+    email = forms.EmailField(required=False)
 
     def save(self, commit=True, *args, **kwargs):
         data = self.cleaned_data
@@ -125,15 +125,18 @@ class PeopleForm(forms.ModelForm):
             people = super(PeopleForm, self).save(commit=commit, *args, **kwargs)
         else:
             people = self.instance
-        if people.user is None:
-            user = User.objects.create_user(data['username'], data['email'],
-                    data['password'])
-            user.save()
-            people.user = user
-        else:
-            people.user.set_password(data['password'])
-            people.user.email = data['email']
-            people.user.save()
+        if people.is_local():
+            if people.user is None:
+                user = User.objects.create_user(data['username'], data['email'],
+                        data['password'])
+                user.save()
+                people.user = user
+            else:
+                if data['password'] != '':
+                    people.user.set_password(data['password'])
+                if data['email'] != '':
+                    people.user.email = data['email']
+                people.user.save()
         return people
 
     class Meta:
