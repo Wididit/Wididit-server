@@ -279,7 +279,12 @@ class AnonymousEntryHandler(AnonymousBaseHandler):
         if 'author' in fields:
             query_native = query_shared = Entry.objects.none()
 
-            authors = [get_people(x) for x in fields['author']]
+            authors = []
+            for author in fields['author']:
+                try:
+                    authors.append(get_people(author))
+                except People.DoesNotExist:
+                    continue
             if enable_native:
                 query_native = query.filter(author__in=authors)
 
