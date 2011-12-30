@@ -201,7 +201,7 @@ class AnonymousEntryHandler(AnonymousBaseHandler):
     model = Entry
     fields = ('id', 'title', 'author', 'contributors',
             'subtitle', 'summary', 'category', 'generator', 'rights', 'source',
-            'content', 'in_reply_to', 'shared_by',)
+            'content', 'in_reply_to', 'shared_by', 'published', 'updated')
 
     def read(self, request, mode=None, userid=None, entryid=None):
         """Returns either a list of notices (either from everybody if
