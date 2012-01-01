@@ -503,3 +503,8 @@ class TestSubscription(WididitTestCase):
         reply = json.loads(response.content)
         self.assertEqual(len(reply), 1)
 
+        response = c.get('/api/json/entry/timeline/?shared&author=tester2',
+                **self.getExtras())
+        self.assertEqual(response.status_code, 200, response.content)
+        reply = json.loads(response.content)
+        self.assertEqual(len(reply), 0)
