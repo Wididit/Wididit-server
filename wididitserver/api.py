@@ -399,6 +399,9 @@ class EntryHandler(BaseHandler):
         entry.delete()
         return rc.DELETED
 
+    id = anonymous.id
+    shared_by = anonymous.shared_by
+
 entry_handler = Resource(EntryHandler, authentication=auth)
 
 ##########################################################################
