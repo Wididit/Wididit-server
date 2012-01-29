@@ -14,6 +14,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import re
+import textwrap
 
 from django.db import models
 from django.contrib import admin
@@ -210,9 +211,14 @@ class Entry(models.Model, Atomizable):
     source = models.TextField(default='', blank=True)
     subtitle = models.CharField(max_length=constants.MAX_SUBTITLE_LENGTH,
             null=True, blank=True)
-    summary = models.TextField(null=True, blank=True)
     title = models.CharField(max_length=constants.MAX_TITLE_LENGTH)
     updated = models.DateTimeField(auto_now=True)
+
+    def summary(self):
+        if len(self.content) <= 500:
+            return self.content
+        else:
+            return textwrap.wrap(self.content, 1000, replace_whitespace=False)[0] + '...'
 
     # Fields specified in RFC 4685 (Atom Threading Extensions)
     in_reply_to = models.ForeignKey('self', null=True, blank=True,
@@ -281,11 +287,7 @@ Signal().connect(set_entry_id, Entry)
 class EntryAdmin(admin.ModelAdmin):
     fieldsets = (
             ('Head', {
-                'fields': ('title', 'author', 'contributors')
-            }),
-            ('Subtitle & summary', {
-                'classes': ('collapse',),
-                'fields': ('subtitle', 'summary')
+                'fields': ('title', 'subtitle', 'author', 'contributors')
             }),
             ('Metadata', {
                 'classes': ('collapse',),
