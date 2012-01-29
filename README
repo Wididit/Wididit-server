@@ -6,22 +6,58 @@ Dependencies
 
 * Python 2 (tested with 2.7)
 * Django (tested with 2.3)
-* haystack
+* django_mobile
 * The Wididit Python library
 
 settings.py
 ===========
 
-Here what should a base settings.py contain (plus the standard things)
+Here is what should a base settings.py contain (plus the standard things)
+
+	TEMPLATE_LOADERS = (
+	    'django_mobile.loader.Loader',
+	    # ...
+	)
+
+	TEMPLATE_CONTEXT_PROCESSORS = (
+	    'django.contrib.auth.context_processors.auth',
+	    'django_mobile.context_processors.flavour',
+	    'django.core.context_processors.static',
+	    'wididitserver.views.context_processor',
+	)
+
+	MIDDLEWARE_CLASSES = (
+	    # ...
+	    'django_mobile.middleware.MobileDetectionMiddleware',
+	    'django_mobile.middleware.SetFlavourMiddleware',
+	)
 
 	INSTALLED_APPS = (
+	    # ...
 	    'wididitserver',
 	    'south',
 	    'piston',
+	    'django_mobile',
 	)
 
 	WIDIDIT_HOSTNAME = 'example.com'
+	WIDIDIT_SERVERNAME = 'The name used on the web interface.'
 	PISTON_IGNORE_DUPE_MODELS = True
+
+urls.py
+=======
+
+And a standart urls.py:
+
+	urlpatterns = patterns('',
+	    url(r'', include('wididitserver.urls', namespace='wididit')),
+	    (r'^static/(?P<path>.*)$', 'django.views.static.serve',
+			{'document_root': settings.STATIC_ROOT,
+			    'show_indexes': True}),
+	)
+
+Don't forget to give the namespace, it is important. If you don't give it,
+some templates will fail rendering.
 
 Web server configuration
 ========================

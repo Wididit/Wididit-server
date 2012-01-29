@@ -9,5 +9,8 @@ urlpatterns = patterns('',
     # API
     url(r'^api/(?P<emitter_format>[^/]+)/',
         include('wididitserver.api', namespace='api')),
+
+    # Web interface
+    url(r'^web/', include('wididitserver.views', namespace='web')),
 )
 
