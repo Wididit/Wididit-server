@@ -438,26 +438,26 @@ whoami_handler = Resource(WhoamiHandler, authentication=auth)
 
 urlpatterns = patterns('',
     # Server
-    url(r'^server/$', server_handler, name='wididit:server_list'),
+    url(r'^server/$', server_handler, name='server_list'),
 
     # People
-    url(r'^people/$', people_handler, name='wididit:people_list'),
-    url(r'^people/(?P<userid>%s)/$' % constants.USERID_MIX_REGEXP, people_handler, name='wididit:people'),
+    url(r'^people/$', people_handler, name='people_list'),
+    url(r'^people/(?P<userid>%s)/$' % constants.USERID_MIX_REGEXP, people_handler, name='people'),
 
     # Subscription
-    url(r'^subscription/(?P<userid>%s)/people/$' % constants.USERID_MIX_REGEXP, people_subscription_handler, name='wididit:people_subscriptions_list'),
-    url(r'^subscription/(?P<userid>%s)/people/(?P<targetid>%s)/$' % (constants.USERID_MIX_REGEXP, constants.USERID_MIX_REGEXP), people_subscription_handler, name='wididit:people_subscription'),
+    url(r'^subscription/(?P<userid>%s)/people/$' % constants.USERID_MIX_REGEXP, people_subscription_handler, name='people_subscriptions_list'),
+    url(r'^subscription/(?P<userid>%s)/people/(?P<targetid>%s)/$' % (constants.USERID_MIX_REGEXP, constants.USERID_MIX_REGEXP), people_subscription_handler, name='people_subscription'),
 
     # Entries
-    url(r'^entry/$', entry_handler, name='wididit:entry_list_all'),
-    url(r'^entry/(?P<mode>timeline)/$', entry_handler, name='wididit:entry_timeline'),
-    url(r'^entry/(?P<userid>%s)/(?P<entryid>[0-9]+)/$' % constants.USERID_MIX_REGEXP, entry_handler, name='wididit:show_entry'),
+    url(r'^entry/$', entry_handler, name='entry_list_all'),
+    url(r'^entry/(?P<mode>timeline)/$', entry_handler, name='entry_timeline'),
+    url(r'^entry/(?P<userid>%s)/(?P<entryid>[0-9]+)/$' % constants.USERID_MIX_REGEXP, entry_handler, name='show_entry'),
 
     # Shares
-    url(r'^share/$', share_handler, name='wididit:share_index'),
+    url(r'^share/$', share_handler, name='share_index'),
 
     # Utils
-    url(r'^oauth/consumer/$', consumer_handler, name='wididit:consumer'),
-    url(r'^whoami/$', whoami_handler, name='wididit:whoami'),
+    url(r'^oauth/consumer/$', consumer_handler, name='consumer'),
+    url(r'^whoami/$', whoami_handler, name='whoami'),
 )
 
