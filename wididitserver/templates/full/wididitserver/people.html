@@ -1,0 +1,14 @@
+{# Display a profile. #}
+{% extends "wididitserver/base.html" %}
+{% load i18n %}
+
+{% block breadcrumbs %}
+	<li><a>{{ people }}</a></li>
+{% endblock %}
+
+{% block body %}
+	{% blocktrans %}Username : {{ people }}{% endblocktrans %}<br />
+	{% trans "Last entries:"%}<br />
+	{% include "wididitserver/entrylist.html" %}
+{% endblock %}
+

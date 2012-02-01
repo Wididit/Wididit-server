@@ -1,0 +1,14 @@
+{% extends "wididitserver/base.html" %}
+{% load i18n %}
+
+{% block breadcrumbs %}
+	<li><a>{% trans "Error" %}</a></li>
+	<li><a>{{ title }}</a></li>
+{% endblock %}
+
+{% block body %}
+	<div class="notice error">
+		{{ message }}
+	</div>
+{% endblock %}
+

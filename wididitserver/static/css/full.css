@@ -1,0 +1,15 @@
+#body {
+	clear: both;
+}
+#nav {
+	clear: both;
+}
+.menu li {
+	z-index: -1; /* Fix bug with Gecko */
+}
+.menu li ul li {
+	z-index: -1; /* Fix bug with Gecko */
+}
+.menu li ul li a {
+	z-index: -1; /* Fix bug with Gecko */
+}

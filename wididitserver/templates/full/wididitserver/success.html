@@ -1,0 +1,15 @@
+{% extends "wididitserver/base.html" %}
+{% load i18n %}
+
+{% block breadcrumbs %}
+	<li><a>{% trans "Success" %}</a></li>
+	<li><a>{{ title }}</a></li>
+{% endblock %}
+
+{% block body %}
+	<div class="notice success">
+		{{ message }}
+	</div>
+{% endblock %}
+
+

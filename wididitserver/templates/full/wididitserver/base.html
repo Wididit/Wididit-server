@@ -1,0 +1,35 @@
+{% load i18n %}
+{% load url from future %}
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="utf-8" />
+	<title>{% block title %}{{ SERVER_NAME }}{% endblock %}</title>
+	<script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/1.6.4/jquery.min.js"></script>
+	<!--[if IE]><script src="http://html5shiv.googlecode.com/svn/trunk/html5.js"></script><![endif]-->
+	<script type="text/javascript" src="{{ STATIC_URL }}js/jquery.snippet.min.js"></script>
+	<script type="text/javascript" src="{{ STATIC_URL }}js/kickstart.js"></script>
+	<link rel="stylesheet" type="text/css" href="{{ STATIC_URL }}css/kickstart.css" media="all" />
+	<link rel="stylesheet" type="text/css" href="{{ STATIC_URL }}css/full.css" media="all" />
+</head>
+<body>
+	<div id="header">
+		<ul class="menu right">
+			{% if request.user.is_authenticated %}
+			<li><a href="{% url 'wididit:web:disconnect' %}">Log out</a></li>
+			{% else %}
+			<li><a href="{% url 'wididit:web:register' %}">Register</a></li>
+			<li><a href="{% url 'wididit:web:connect' %}">Log in</a></li>
+			{% endif %}
+		</ul>
+		<ul id="nav" class="breadcrumbs alt1">
+			<li><a href="{% url 'wididit:web:index' %}">{{ SERVER_NAME }}</a></li>
+			{% block breadcrumbs %}<li><a>home</a></li>{% endblock %}
+		</ul>
+	</div>
+	<div id="body">
+		{% block body %}
+		{% endblock %}
+	</div>
+</body>
+</html>
