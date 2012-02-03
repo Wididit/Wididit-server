@@ -16,7 +16,7 @@
 	<div id="header">
 		<ul class="menu right">
 			{% if request.user.is_authenticated %}
-			<li><a href="{% url 'wididit:web:disconnect' %}">Log out</a></li>
+			<li><a href="{% url 'wididit:web:disconnect' %}">{% blocktrans with userid=PEOPLE.userid %}Log out [logged in as {{ userid }}] {% endblocktrans %}</a></li>
 			{% else %}
 			<li><a href="{% url 'wididit:web:register' %}">Register</a></li>
 			<li><a href="{% url 'wididit:web:connect' %}">Log in</a></li>
