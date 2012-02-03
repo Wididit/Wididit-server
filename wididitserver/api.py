@@ -16,6 +16,7 @@
 from django.conf.urls.defaults import patterns, include, url
 from django.core.context_processors import csrf
 from django.http import HttpResponse
+from django.db import IntegrityError
 
 from piston.authentication import OAuthAuthentication, HttpBasicAuthentication
 from piston.handler import BaseHandler, AnonymousBaseHandler
@@ -96,11 +97,13 @@ class AnonymousPeopleHandler(AnonymousBaseHandler):
     def create(self, request):
         people = request.form.save(commit=False)
         # FIXME: if creating a remote user, make sure he exists.
-        people.save()
-
-        response = rc.CREATED
-        response.content = str(people.userid())
-        return response
+        try:
+            people.save()
+            response = rc.CREATED
+            response.content = str(people.userid())
+            return response
+        except IntegrityError:
+            return rc.DUPLICATE_ENTRY
 
 class PeopleHandler(BaseHandler):
     allowed_methods = ('GET', 'POST', 'PUT',)
