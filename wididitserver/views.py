@@ -5,11 +5,14 @@ from django.shortcuts import render_to_response
 from django.http import HttpResponseRedirect
 from django.core.urlresolvers import reverse
 from django.template import RequestContext
+from django.db import IntegrityError
 from django import forms
 
 import settings
 from wididit import constants
 from wididitserver.models import validate_username, models
+from wididitserver.models import PeopleForm
+from wididitserver.models import People
 
 def error(request, title, message):
     c = RequestContext(request, {
@@ -27,6 +30,7 @@ def success(request, title, message):
 
 def context_processor(request):
     return {
+            'PEOPLE': People.objects.get(user=request.user.pk),
             'SERVER_HOSTNAME': settings.WIDIDIT_HOSTNAME,
             'SERVER_NAME': settings.WIDIDIT_SERVERNAME,
             'request': request,
@@ -99,8 +103,30 @@ def disconnect(request):
         _('You have been successfully logged out.'))
 
 def register(request):
-    # TODO implement this
-    pass
+    if request.user.is_authenticated():
+        logout(request)
+    if request.method == 'POST':
+        form = PeopleForm(request.POST)
+        if form.is_valid():
+            try:
+                people = form.save()
+                user = authenticate(username=form.cleaned_data['username'],
+                        password=form.cleaned_data['password'])
+                login(request, user)
+                return success(request, _('Registration'),
+                    _('You have successfully registered and you have been '
+                        'logged in.'))
+            except IntegrityError:
+                if 'username' not in form.errors:
+                    form.errors.update({'username': []})
+                form.errors['username'].append(
+                    _('This username already exists. Please pick another.'))
+    else:
+        form = PeopleForm()
+    c = RequestContext(request, {
+        'form': form,
+        })
+    return render_to_response('wididitserver/registration_form.html', c)
 
 urlpatterns = patterns('',
         url(r'^$', index, name='index'),

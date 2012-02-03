@@ -1,0 +1,17 @@
+{# Connection form. #}
+{% extends "wididitserver/base.html" %}
+{% load i18n %}
+
+{% block breadcrumbs %}
+	<li><a>{% trans "Registration" %}</a></li>
+{% endblock %}
+
+{% block body %}
+	<form action="{% url wididit:web:register %}" method="post">
+		{% csrf_token %}
+		{{ form.as_p }}
+
+		<button type="submit">{% trans "Register" %}</button>
+	</form>
+{% endblock %}
+
