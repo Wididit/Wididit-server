@@ -238,8 +238,6 @@ class PeopleForm(WididitModelForm):
         model = People
         exclude = ('user', 'server',)
 
-PeopleForm.base_fields.keyOrder = ['username', 'password', 'email', 'biography']
-
 
 ##########################################################################
 # Tag
@@ -398,8 +396,8 @@ class EntryAdmin(admin.ModelAdmin):
 admin.site.register(Entry, EntryAdmin)
 
 class EntryForm(WididitModelForm):
-    def __init__(self, data, *args, **kwargs):
-        if 'contributors' in data:
+    def __init__(self, data=None, *args, **kwargs):
+        if data is not None and 'contributors' in data:
             self._contributors = data['contributors'].split()
             del data['contributors']
         super(EntryForm, self).__init__(data, *args, **kwargs)
