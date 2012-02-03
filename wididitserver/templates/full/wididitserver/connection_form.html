@@ -3,19 +3,19 @@
 {% load i18n %}
 
 {% block breadcrumbs %}
-	<li><a>Connection</a></li>
+	<li><a>{% trans "Log in" %}</a></li>
 {% endblock %}
 
 {% block body %}
 	<form action="{% url wididit:web:connect %}" method="post">
 		{% csrf_token %}
 		<label for="username">{% trans "User ID:" %}</label>
-		<input id="username" name="userid" placeholder="Your user name" type="text" />
+		<input id="username" name="userid" placeholder="{% trans "Your user name" %}" type="text" />
 
 		<label for="password">{% trans "Password:" %}</label>
-		<input id="password" name="password" placeholder="Your password" type="password" />
+		<input id="password" name="password" placeholder="{% trans "Your password" %}" type="password" />
 
-		<button type="submit">{% trans "Connect" %}</button>
+		<button type="submit">{% trans "Log in" %}</button>
 	</form>
 {% endblock %}
 
