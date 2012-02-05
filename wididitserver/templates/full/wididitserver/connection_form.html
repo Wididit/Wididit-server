@@ -10,7 +10,7 @@
 	<form action="{% url wididit:web:connect %}" method="post">
 		{% csrf_token %}
 		<label for="username">{% trans "User ID:" %}</label>
-		<input id="username" name="userid" placeholder="{% trans "Your user name" %}" type="text" />
+		<input id="username" name="username" placeholder="{% trans "Your user name" %}" type="text" />
 
 		<label for="password">{% trans "Password:" %}</label>
 		<input id="password" name="password" placeholder="{% trans "Your password" %}" type="password" />

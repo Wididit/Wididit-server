@@ -11,7 +11,7 @@ from django import forms
 import settings
 from wididit import constants
 from wididitserver.models import validate_username, models
-from wididitserver.models import PeopleForm
+from wididitserver.models import PeopleForm, EntryForm
 from wididitserver.models import People
 
 def error(request, title, message):
@@ -29,8 +29,12 @@ def success(request, title, message):
     return render_to_response('wididitserver/success.html', c)
 
 def context_processor(request):
+    try:
+        people = People.objects.get(user=request.user.pk)
+    except:
+        people = None
     return {
-            'PEOPLE': People.objects.get(user=request.user.pk),
+            'PEOPLE': people,
             'SERVER_HOSTNAME': settings.WIDIDIT_HOSTNAME,
             'SERVER_NAME': settings.WIDIDIT_SERVERNAME,
             'request': request,
@@ -53,6 +57,7 @@ def api_request(request, handler, mode='read', **kwargs):
 def index(request):
     c = RequestContext(request, {
             'entries': api_request(request, 'Entry'),
+            'post_form' : EntryForm(),
         })
     return render_to_response('wididitserver/index.html', c)
 
@@ -63,19 +68,20 @@ def show_people(request, userid):
         })
     return render_to_response('wididitserver/people.html', c)
 
-class ConnectionForm(forms.Form):
-    username = models.CharField(max_length=constants.MAX_USERNAME_LENGTH,
-            validators=[validate_username])
-    password = models.CharField()
+class ConnectionForm(PeopleForm):
+    email = None
+    biography = None
+    password2 = None
 
 def connect(request):
     if request.user.is_authenticated():
         logout(request)
     if request.method == 'POST':
         form = ConnectionForm(request.POST)
-        if form.is_valid():
-            user = authenticate(username=form.username,
-                    password=form.password)
+        if form.is_valid() and 'username' in form.cleaned_data and \
+                'password' in form.cleaned_data:
+            user = authenticate(username=form.cleaned_data['username'],
+                    password=form.cleaned_data['password'])
             if user is not None:
                 if user.is_active:
                     login(request, user)
@@ -108,19 +114,22 @@ def register(request):
     if request.method == 'POST':
         form = PeopleForm(request.POST)
         if form.is_valid():
-            try:
-                people = form.save()
-                user = authenticate(username=form.cleaned_data['username'],
-                        password=form.cleaned_data['password'])
-                login(request, user)
-                return success(request, _('Registration'),
-                    _('You have successfully registered and you have been '
-                        'logged in.'))
-            except IntegrityError:
-                if 'username' not in form.errors:
-                    form.errors.update({'username': []})
-                form.errors['username'].append(
-                    _('This username already exists. Please pick another.'))
+            if form.cleaned_data['password']!=form.cleaned_data['password2']:
+                form.errors.update({'password2':
+                    _('You did not give the same password.')})
+            else:
+                try:
+                    people = form.save()
+                    user = authenticate(username=form.cleaned_data['username'],
+                            password=form.cleaned_data['password'])
+                    login(request, user)
+                    return success(request, _('Registration'),
+                        _('You have successfully registered and you have been '
+                            'logged in.'))
+                except IntegrityError:
+                    form.errors.update({'username':
+                        _('This username already exists. Please pick another.'
+                            )})
     else:
         form = PeopleForm()
     c = RequestContext(request, {
@@ -128,10 +137,17 @@ def register(request):
         })
     return render_to_response('wididitserver/registration_form.html', c)
 
+
+def post(request):
+    # TODO: implement this
+    pass
+
 urlpatterns = patterns('',
         url(r'^$', index, name='index'),
         url(r'^people/(?P<userid>%s)/$' % constants.USERID_MIX_REGEXP, show_people, name='people'),
         url(r'^connect/$', connect, name='connect'),
         url(r'^disconnect/$', disconnect, name='disconnect'),
         url(r'^register/$', register, name='register'),
+
+        url(r'^post/$', post, name='post'),
 )

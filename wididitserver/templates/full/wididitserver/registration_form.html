@@ -9,7 +9,29 @@
 {% block body %}
 	<form action="{% url wididit:web:register %}" method="post">
 		{% csrf_token %}
-		{{ form.as_p }}
+		<div {% if form.username.errors %}class="notice error"{% endif %}>
+			<label for="username">{% trans "User ID:" %}</label>
+			{{ form.username.errors }}
+			<input id="username" name="username" placeholder="{% trans "Your user name" %}" type="text" value="{{ form.username.value }}"/>
+		</div>
+
+		<div {% if form.password.errors %}class="notice error"{% endif %}>
+			<label for="password">{% trans "Password:" %}</label>
+			{{ form.password.errors }}
+			<input id="password" name="password" placeholder="{% trans "Your password" %}" type="password" value="{{ form.password.value }}"/>
+		</div>
+
+		<div {% if form.password2.errors %}class="notice error"{% endif %}>
+			<label for="password2">{% trans "Password (again):" %}</label>
+			{{ form.password2.errors }}
+			<input id="password2" name="password2" placeholder="{% trans "Your password" %}" type="password" value="{{ form.password2.value }}"/>
+		</div>
+
+		<div {% if form.email.errors %}class="notice error"{% endif %}>
+			<label for="email">{% trans "Email address (optional):" %}</label>
+			{{ form.email.errors }}
+			<input id="email" name="email" placeholder="{% trans "you@example.org" %}" type="text" value="{{ form.email.value }}" />
+		</div>
 
 		<button type="submit">{% trans "Register" %}</button>
 	</form>
