@@ -212,12 +212,12 @@ class Entry(models.Model, Atomizable):
     generator = models.CharField(max_length=constants.MAX_GENERATOR_LENGTH,
             help_text='Client used to post this entry.', blank=True)
     published = models.DateTimeField(auto_now_add=True)
-    rights = models.TextField(blank=True)
+    rights = models.TextField(default='Copy not allowed.')
     #source = models.ForeignKey('self', null=True, blank=True,
     #        related_name='entry_source')
     source = models.TextField(default='', blank=True)
     subtitle = models.CharField(max_length=constants.MAX_SUBTITLE_LENGTH,
-            null=True, blank=True)
+            blank=True, default='')
     title = models.CharField(max_length=constants.MAX_TITLE_LENGTH)
     updated = models.DateTimeField(auto_now=True)
 

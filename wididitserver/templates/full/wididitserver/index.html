@@ -8,14 +8,21 @@
 		{% if request.user.is_authenticated %}<li><a href="#post">{% trans "Post" %}</a></li>{% endif %}
 	</ul>
 	<div style="clear: both"></div>
-	{{ foo }}
 	<div id="timeline" class="tab-content">
 		{% include "wididitserver/entrylist.html" %}
 	</div>
 	<div id="post" class="tab-content">
 		<form action="{% url wididit:web:post %}" method="post">
-			{{ post_form.as_p }}
-		<button type="submit">{% trans "Post" %}</button>
+			{% csrf_token %}
+			<input id="rights" name="rights" type="hidden" value="{{ post_form.rights.value }}" />
+			<input id="subtitle" name="subtitle" type="hidden" value="{{ post_form.subtitle.value }}" />
+			<label for="title">{% trans "Title:" %}</label>
+			<input id="title" name="title" placeholder="{% trans "A title for your entry." %}" type="text" />
+
+			<label for="content">{% trans "Content:" %}</label>
+			<textarea id="content" name="content" placeholder="{% trans "Your content" %}"></textarea>
+			<input type="submit" id="post" name="post" value="{% trans "Register" %}" />
+			<input type="submit" id="preview" name="preview" value="{% trans "Preview / full editor" %}" />
 		</form>
 	</div>
 {% endblock %}

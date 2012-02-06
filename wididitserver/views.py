@@ -1,5 +1,6 @@
 from django.conf.urls.defaults import patterns, include, url
 from django.contrib.auth import authenticate, login, logout
+from django.contrib.auth.decorators import login_required
 from django.utils.translation import ugettext as _
 from django.shortcuts import render_to_response
 from django.http import HttpResponseRedirect
@@ -12,7 +13,7 @@ import settings
 from wididit import constants
 from wididitserver.models import validate_username, models
 from wididitserver.models import PeopleForm, EntryForm
-from wididitserver.models import People
+from wididitserver.models import People, Entry
 
 def error(request, title, message):
     c = RequestContext(request, {
@@ -137,10 +138,23 @@ def register(request):
         })
     return render_to_response('wididitserver/registration_form.html', c)
 
-
+@login_required
 def post(request):
-    # TODO: implement this
-    pass
+    if request.method == 'POST':
+        # TODO: implement this
+        form = EntryForm(request.POST)
+        if 'post' in request.POST:
+            # TODO: implement this
+            pass
+        elif 'preview' in request.POST:
+            # TODO: implement this
+            pass
+    else:
+        form = EntryForm()
+    c = RequestContext(request, {
+        'form': form,
+        })
+    return render_to_response('wididitserver/post_form.html', c)
 
 urlpatterns = patterns('',
         url(r'^$', index, name='index'),

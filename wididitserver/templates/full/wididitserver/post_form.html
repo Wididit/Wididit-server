@@ -1,0 +1,53 @@
+{# Connection form. #}
+{% extends "wididitserver/base.html" %}
+{% load i18n %}
+
+{% block breadcrumbs %}
+	<li><a>{% trans "New entry" %}</a></li>
+{% endblock %}
+
+{% block body %}
+	<ul class="tabs" id="body">
+		<li><a href="#content">{% trans "Content" %}</a></li>
+		<li><a href="#metadata">{% trans "Metadata" %}</a></li>
+	</ul>
+	<div style="clear: both"></div>
+	<form action="{% url wididit:web:post %}" method="post">
+		{% csrf_token %}
+		<input id="generator" name="generator" type="hidden" value="web"/>
+		<div id="content" class="tab-content">
+			<div {% if form.title.errors %}class="notice error"{% endif %}>
+				<label for="title">{% trans "Title:" %}</label>
+				{{ form.title.errors }}
+				<input id="title" name="title" placeholder="{% trans "A title for your entry." %}" type="text" value="{{ form.title.value }}"/>
+			</div>
+			<div {% if form.subtitle.errors %}class="notice error"{% endif %}>
+				<label for="subtitle">{% trans "Subtitle:" %}</label>
+				{{ form.subtitle.errors }}
+				<input id="subtitle" name="subtitle" placeholder="{% trans "A subtitle for your entry." %}" type="text" value="{{ form.subtitle.value }}"/>
+			</div>
+
+			<div {% if form.content.errors %}class="notice error"{% endif %}>
+				<label for="content">{% trans "Content:" %}</label>
+				{{ form.content.errors }}
+				<textarea id="content" name="content" placeholder="{% trans "Your content" %}">{{ form.content.value }}</textarea>
+			</div>
+		</div>
+		<div id="metadata" class="tab-content">
+			<div {% if form.contributors.errors %}class="notice error"{% endif %}>
+				<label for="contributors">{% trans "Contributors:" %}</label>
+				{{ form.contributors.errors }}
+				{{ form.contributors }}
+			</div>
+			<div {% if form.rights.errors %}class="notice error"{% endif %}>
+				<label for="rights">{% trans "Rights:" %}</label>
+				{{ form.rights.errors }}
+				<textarea id="rights" name="rights" placeholder="{% trans "Write here under what conditions other people can reuse what your entry." %}">{{ form.rights.value }}</textarea>
+			</div>
+		</div>
+		<input type="submit" id="post" name="post" value="{% trans "Register" %}" />
+		<input type="submit" id="preview" name="preview" value="{% trans "Preview" %}" />
+	</form>
+{% endblock %}
+
+
