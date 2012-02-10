@@ -4,12 +4,8 @@
 #nav {
 	clear: both;
 }
-.menu li {
-	z-index: -1; /* Fix bug with Gecko */
-}
-.menu li ul li {
-	z-index: -1; /* Fix bug with Gecko */
-}
-.menu li ul li a {
-	z-index: -1; /* Fix bug with Gecko */
+@-moz-document url-prefix() { /* Target only Gecko. This code makes links unclickable on Chromium. */
+	.menu li {
+		z-index: -1; /* Fix bug with Gecko */
+	}
 }
