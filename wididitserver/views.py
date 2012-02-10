@@ -14,6 +14,7 @@ from wididit import constants
 from wididitserver.models import validate_username, models
 from wididitserver.models import PeopleForm, EntryForm
 from wididitserver.models import People, Entry
+from wididitserver.api import EntryHandler
 
 def error(request, title, message):
     c = RequestContext(request, {
@@ -140,21 +141,36 @@ def register(request):
 
 @login_required
 def post(request):
+    entry = None
     if request.method == 'POST':
         # TODO: implement this
         form = EntryForm(request.POST)
-        if 'post' in request.POST:
-            # TODO: implement this
-            pass
-        elif 'preview' in request.POST:
-            # TODO: implement this
-            pass
+        if form.is_valid():
+            if 'post' in request.POST:
+                entry = form.save(commit=False)
+                author = People.objects.get(user=request.user)
+                entry.author = author
+                entry.save()
+                return HttpResponseRedirect(reverse('wididit:web:entry',
+                        args=[entry.author, entry.id2]))
+            elif 'preview' in request.POST:
+                entry = form.save(commit=False)
+                author = People.objects.get(user=request.user)
+                entry.author = author
     else:
         form = EntryForm()
     c = RequestContext(request, {
         'form': form,
+        'entry': entry,
         })
     return render_to_response('wididitserver/post_form.html', c)
+
+def show_entry(request, userid, entryid):
+    entry = EntryHandler().read(request, userid=userid, entryid=entryid)
+    c = RequestContext(request, {
+        'entry': entry,
+        })
+    return render_to_response('wididitserver/display_entry.html', c)
 
 urlpatterns = patterns('',
         url(r'^$', index, name='index'),
@@ -164,4 +180,6 @@ urlpatterns = patterns('',
         url(r'^register/$', register, name='register'),
 
         url(r'^post/$', post, name='post'),
+
+        url(r'^entry/(?P<userid>%s)/(?P<entryid>[0-9]+)/$' % constants.USERID_MIX_REGEXP, show_entry, name='entry'),
 )

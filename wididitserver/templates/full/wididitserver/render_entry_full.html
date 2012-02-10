@@ -1,0 +1,9 @@
+{% load i18n %}
+
+{{ entry }}
+<h1>{{ entry.title }}</h1>
+<a href="{% url wididit:web:people entry.author %}" class="people author">{{ entry.author }}</a>
+<p class="subtitle">{{ entry.subtitle }}</p>
+<p class="summary">{{ entry.summary }}</p>
+{{ entry.content }}
+

@@ -8,6 +8,7 @@
 
 {% block body %}
 	<ul class="tabs" id="body">
+		{% if entry %}<li><a href="#preview">{% trans "Preview" %}</a></li>{% endif %}
 		<li><a href="#content">{% trans "Content" %}</a></li>
 		<li><a href="#metadata">{% trans "Metadata" %}</a></li>
 	</ul>
@@ -15,6 +16,11 @@
 	<form action="{% url wididit:web:post %}" method="post">
 		{% csrf_token %}
 		<input id="generator" name="generator" type="hidden" value="web"/>
+		<div id="preview" class="tab-content">
+			{% if entry %}
+				{% include "wididitserver/render_entry_full.html" %}
+			{% endif %}
+		</div>
 		<div id="content" class="tab-content">
 			<div {% if form.title.errors %}class="notice error"{% endif %}>
 				<label for="title">{% trans "Title:" %}</label>
@@ -45,7 +51,7 @@
 				<textarea id="rights" name="rights" placeholder="{% trans "Write here under what conditions other people can reuse what your entry." %}">{{ form.rights.value }}</textarea>
 			</div>
 		</div>
-		<input type="submit" id="post" name="post" value="{% trans "Register" %}" />
+		<input type="submit" id="post" name="post" value="{% trans "Post" %}" />
 		<input type="submit" id="preview" name="preview" value="{% trans "Preview" %}" />
 	</form>
 {% endblock %}

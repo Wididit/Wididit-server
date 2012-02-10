@@ -1,8 +1,8 @@
 {% load i18n %}
 
-<ul class="entrylist alt">
+<ul class="alt">
 	{% for entry in entries %}
-	<li>
+	<li style="border-bottom: none;">
 		<a href="{% url wididit:web:people entry.author %}" class="people">{{ entry.author }}</a>
 		{{ entry.summary }}
 	</li>

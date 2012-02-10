@@ -1,0 +1,32 @@
+{# Display an entry. #}
+{% extends "wididitserver/base.html" %}
+{% load i18n %}
+
+{% block breadcrumbs %}
+	<li><a>{% trans "Entries" %}</a></li>
+	<li><a href="{% url wididit:web:people entry.author %}">{{ entry.author }}</a></li>
+	<li><a>{{ entry.title }}</a></li>
+{% endblock %}
+
+{% block body %}
+	<ul class="tabs" id="body">
+		<li><a href="#content">{% trans "Content" %}</a></li>
+		<li><a href="#metadata">{% trans "Metadata" %}</a></li>
+	</ul>
+	<div style="clear: both"></div>
+	<div id="content" class="tab-content">
+		{% include "wididitserver/render_entry_full.html" %}
+	</div>
+	<div id="metadata" class="tab-content">
+		<h3>{% trans "Contributors:" %}</h3>
+		<ul>
+			{% for contributor in entry.contributors.all %}
+				<li><a href="{% url wididit:web:people contributor %}">{{ contributor }}</a></li>
+			{% endfor %}
+		</ul>
+		<h3>{% trans "Rights" %}</h3>
+		<p>{{ entry.rights }}</p>
+	</div>
+{% endblock %}
+
+
