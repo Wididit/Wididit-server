@@ -20,9 +20,14 @@ position:relative;z-index:1000;}
 	
 /*--------------Sub Menus-------------------*/
 	/*.menu li:hover > ul{display:block;}*/
-	.menu ul{margin:0;padding:0;position: absolute;top:100%;left:0;display:none;}
-	.menu ul li{display:block;width:auto;white-space: nowrap;}
+	.menu ul{margin:0;padding:0;position: absolute;top:100%;left:0;display:none;min-width:150px;max-width:150%;*width:150px;}
+	.menu ul li{display:block;width:100%;}
+	.menu ul li a{display:block;}
 		.menu ul ul{top:0;left:100%;}
+		
+/*--------------Dividers-------------------*/		
+	.menu ul li.divider{border-top:1px solid #ccc;}
+	.menu ul li.divider a{border-top:1px solid #fff;}
 	
 /*--------------Arrows-------------------*/
 	.menu li.has-menu a{padding-right:25px;}

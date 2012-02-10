@@ -80,17 +80,6 @@ background:#efefef;
 	The inside of a column is automatically wrapped with div.inner by Javascript. 
 	This allows for more flexible styling and layout without breaking your columns.
 */
-.col_1 .inner,
-.col_2 .inner,
-.col_3 .inner,
-.col_4 .inner,
-.col_5 .inner,
-.col_6 .inner,
-.col_7 .inner,
-.col_8 .inner,
-.col_9 .inner,
-.col_10 .inner,
-.col_11 .inner,
-.col_12 .inner{
+.column .inner{
 	padding:10px;
 }

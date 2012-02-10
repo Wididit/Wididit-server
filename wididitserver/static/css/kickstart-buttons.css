@@ -7,6 +7,133 @@
 */
 
 /*---------------------------------
+	BUTTONS
+-----------------------------------*/
+button,
+a.btn,
+a.btn:visited,
+a.button,
+a.button:visited,
+input[type="submit"],
+input[type="reset"],
+input[type="button"]{
+position:relative;
+top:0;
+left:0;
+margin:0 2px 20px 0;
+padding:10px 15px;
+line-height:100%;
+-moz-border-radius:5px;
+-webkit-border-radius:5px;
+border-radius:5px;
+cursor: pointer;
+width:auto;
+overflow:visible;
+font-weight:normal;
+font-size:14px; /*Pixels for consistancy*/
+text-shadow:0 1px 0 #fff;
+color:#666;
+text-decoration:none;
+vertical-align: middle;
+box-sizing: border-box;
+display:inline-block;
+*display:inline;/*IE ONLY*/
+zoom:1;
+border:1px solid #ccc;
+background: rgb(252,252,252); /* Old browsers */
+background: -moz-linear-gradient(top, rgba(252,252,252,1) 0%, rgba(224,224,224,1) 100%); /* FF3.6+ */
+background: -webkit-gradient(linear, left top, left bottom, color-stop(0%,rgba(252,252,252,1)), color-stop(100%,rgba(224,224,224,1))); /* Chrome,Safari4+ */
+background: -webkit-linear-gradient(top, rgba(252,252,252,1) 0%,rgba(224,224,224,1) 100%); /* Chrome10+,Safari5.1+ */
+background: -o-linear-gradient(top, rgba(252,252,252,1) 0%,rgba(224,224,224,1) 100%); /* Opera11.10+ */
+background: -ms-linear-gradient(top, rgba(252,252,252,1) 0%,rgba(224,224,224,1) 100%); /* IE10+ */
+filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#fcfcfc', endColorstr='#e0e0e0',GradientType=0 ); /* IE6-9 */
+background: linear-gradient(top, rgba(252,252,252,1) 0%,rgba(224,224,224,1) 100%); /* W3C */
+}
+
+button,
+input[type="submit"],
+input[type="reset"],
+input[type="button"]{*padding:7px 15px;}/*IE 7 ONLY*/
+	
+	a.btn,a.button{}/*overrides*/
+	button.small, a.btn.small, a.button.small{font-size:0.8em;padding:5px 10px;}
+	button.medium, a.btn.medium, a.button.medium{}/*default*/
+	button.large, a.btn.large, a.button.large{font-size:1.3em;padding:10px 20px;}
+	button.disabled, a.btn.disabled, a.button.disabled{color:#ccc;cursor:default;background:#efefef;}
+	button.disabled:hover, a.btn.disabled:hover, a.button.disabled:hover{border:1px solid #ccc;background:#efefef;}
+	
+	button:hover,
+	a.btn:hover,
+	a.button:hover,
+	input[type="submit"]:hover,
+	input[type="reset"]:hover,
+	input[type="button"]:hover{
+	border:1px solid #bbb;
+	background: rgb(252,252,252); /* Old browsers */
+	background: -moz-linear-gradient(top, rgba(252,252,252,1) 0%, rgba(237,237,237,1) 100%); /* FF3.6+ */
+	background: -webkit-gradient(linear, left top, left bottom, color-stop(0%,rgba(252,252,252,1)), color-stop(100%,rgba(237,237,237,1))); /* Chrome,Safari4+ */
+	background: -webkit-linear-gradient(top, rgba(252,252,252,1) 0%,rgba(237,237,237,1) 100%); /* Chrome10+,Safari5.1+ */
+	background: -o-linear-gradient(top, rgba(252,252,252,1) 0%,rgba(237,237,237,1) 100%); /* Opera11.10+ */
+	background: -ms-linear-gradient(top, rgba(252,252,252,1) 0%,rgba(237,237,237,1) 100%); /* IE10+ */
+	filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#fcfcfc', endColorstr='#ededed',GradientType=0 ); /* IE6-9 */
+	background: linear-gradient(top, rgba(252,252,252,1) 0%,rgba(237,237,237,1) 100%); /* W3C */
+	}
+	
+	button img,
+	a.btn img,
+	a.button img,
+	input[type="submit"] img,
+	input[type="reset"] img,
+	input[type="button"] img{
+	display:inline;
+	margin:0;
+	vertical-align: middle;
+	margin:-10px 10px -5px -5px;
+	padding:0;
+	}
+	
+	.small img{margin:-3px 5px -3px -3px;}
+	.medium img{margin:-10px 10px -5px -5px;}
+	.large img{margin:-10px 10px -10px -10px;}
+	.icon-only{padding:7px 10px;}
+	.icon-only img{margin:0;display:block;padding:0;}
+	.icon-only .icon{margin:-5px -6px -8px -6px;}
+	
+	/* icons */
+	button .icon,
+	a.btn .icon,
+	a.button .icon,
+	input[type="submit"] .icon,
+	input[type="reset"] .icon,
+	input[type="button"] .icon{
+	vertical-align: middle;
+	margin:-5px 3px -7px -2px;
+	*margin:-5px 3px -10px 0px;/*IE 7 ONLY*/
+	}
+	
+	button .icon.medium,
+	a.btn .icon.medium,
+	a.button .icon.medium,
+	input[type="submit"] .icon.medium,
+	input[type="reset"] .icon.medium,
+	input[type="button"] .icon.medium{
+	margin-left:-5px;
+	*left:-5px;
+	*top:0px;
+	}
+	
+	button .icon.large,
+	a.btn .icon.large,
+	a.button .icon.large,
+	input[type="submit"] .icon.large,
+	input[type="reset"] .icon.large,
+	input[type="button"] .icon.large{
+	margin-left:-10px;
+	*left:-10px;
+	*top:0px;
+	}
+
+/*---------------------------------
 	ORANGE
 -----------------------------------*/
 button.orange,
