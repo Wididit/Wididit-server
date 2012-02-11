@@ -9,3 +9,20 @@
 		z-index: -1; /* Fix bug with Gecko */
 	}
 }
+
+ul.entrylist li .entryend {
+	clear: both;
+}
+ul.entrylist li .avatar {
+	float: right;
+	margin: 5px;
+}
+ul.entrylist li .author {
+	float: right;
+}
+ul.entrylist li .author .hostname {
+	display: none;
+}
+ul.entrylist li .author:hover .hostname {
+	display: inline;
+}

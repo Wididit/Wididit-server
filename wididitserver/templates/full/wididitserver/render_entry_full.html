@@ -2,6 +2,7 @@
 
 {{ entry }}
 <h1>{{ entry.title }}</h1>
+<img src="{% gravatar_for_user entry.author.user %}" alt="gravatar" />
 <a href="{% url wididit:web:people entry.author %}" class="people author">{{ entry.author }}</a>
 <p class="subtitle">{{ entry.subtitle }}</p>
 <p class="summary">{{ entry.summary }}</p>

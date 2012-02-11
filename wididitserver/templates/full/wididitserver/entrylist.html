@@ -1,10 +1,16 @@
 {% load i18n %}
+{% load gravatar %}
 
-<ul class="alt">
+<ul class="alt entrylist">
 	{% for entry in entries %}
 	<li style="border-bottom: none;">
-		<a href="{% url wididit:web:people entry.author %}" class="people">{{ entry.author }}</a>
+		<img src="{% gravatar_for_user entry.author.user %}" alt="gravatar" class="avatar"/>
+		<a href="{% url wididit:web:people entry.author %}" class="author people">
+			{{ entry.author.username }}<span class="hostname">@{{ entry.author.server.hostname }}</span>
+		</a>
+		<h3>{{ entry.title }}</h3><br />
 		{{ entry.summary }}
+		<div class="entryend"></div>
 	</li>
 	{% endfor %}
 </ul>

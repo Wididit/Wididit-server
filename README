@@ -1,5 +1,5 @@
 Wididit is a distributed social network.
-Check out the doc at <http://wididit.github.com/>.
+Check out the doc at <http://doc.wididit.progval.net/>.
 
 Dependencies
 ============
@@ -7,6 +7,7 @@ Dependencies
 * Python 2 (tested with 2.7)
 * Django (tested with 2.3)
 * django_mobile
+* django-gravatar
 * The Wididit Python library
 
 settings.py
@@ -38,6 +39,7 @@ Here is what should a base settings.py contain (plus the standard things)
 	    'south',
 	    'piston',
 	    'django_mobile',
+	    'gravatar',
 	)
 
 	WIDIDIT_HOSTNAME = 'example.com'
