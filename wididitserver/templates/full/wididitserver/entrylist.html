@@ -1,5 +1,6 @@
 {% load i18n %}
 {% load gravatar %}
+{% load markup %}
 
 <ul class="alt entrylist">
 	{% for entry in entries %}
@@ -9,7 +10,7 @@
 			{{ entry.author.username }}<span class="hostname">@{{ entry.author.server.hostname }}</span>
 		</a>
 		<h3>{{ entry.title }}</h3><br />
-		{{ entry.summary }}
+		<div style="white-space: pre-wrap; font-family: monospace;">{{ entry.summary }}</div>
 		<div class="entryend"></div>
 	</li>
 	{% endfor %}

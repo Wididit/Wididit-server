@@ -35,6 +35,7 @@ Here is what should a base settings.py contain (plus the standard things)
 
 	INSTALLED_APPS = (
 	    # ...
+	    'django.contrib.markup',
 	    'wididitserver',
 	    'south',
 	    'piston',

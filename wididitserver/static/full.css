@@ -10,19 +10,19 @@
 	}
 }
 
-ul.entrylist li .entryend {
+ul.entrylist li .entryend, .fullentry .entryend {
 	clear: both;
 }
-ul.entrylist li .avatar {
+ul.entrylist li .avatar, .fullentry .avatar {
 	float: right;
 	margin: 5px;
 }
-ul.entrylist li .author {
+ul.entrylist li .author, .fullentry .author {
 	float: right;
 }
-ul.entrylist li .author .hostname {
+ul.entrylist li .author .hostname, .fullentry .author .hostname {
 	display: none;
 }
-ul.entrylist li .author:hover .hostname {
+ul.entrylist li .author:hover .hostname, .fullentry .author:hover .hostname {
 	display: inline;
 }
