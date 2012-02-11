@@ -86,6 +86,12 @@ def connect(request):
                     password=form.cleaned_data['password'])
             if user is not None:
                 if user.is_active:
+                    try:
+                        people = People.objects.get(user=user)
+                    except People.DoesNotExist:
+                        # Create a Wididit profile
+                        people = People(username=user.username, user=user)
+                        people.save()
                     login(request, user)
                     return success(request, _('Logged in'),
                         _('You have been successfully logged in.'))
