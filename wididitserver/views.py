@@ -175,8 +175,8 @@ def show_entry(request, userid, entryid):
     entry = EntryHandler().read(request, userid=userid, entryid=entryid)
     form = EntryForm(instance=entry)
     if request.method == 'POST':
-        author = People.objects.get(user=request.user)
-        if author != entry.author and author not in entry.contributors.all():
+        people = People.objects.get(user=request.user)
+        if people != entry.author and author not in entry.contributors.all():
             return error(request, _('Edition'),
                     _('You are not authorized to edit this entry.'))
         form = EntryForm(request.POST, instance=entry)
