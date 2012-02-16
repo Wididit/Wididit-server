@@ -12,6 +12,7 @@
 	<ul class="tabs" id="body">
 		<li><a href="#content">{% trans "Content" %}</a></li>
 		<li><a href="#metadata">{% trans "Metadata" %}</a></li>
+		{% if form %}<li><a href="#edit">{% trans "Edit" %}</a></li>{% endif %}
 	</ul>
 	<div style="clear: both"></div>
 	<div id="content" class="tab-content">
@@ -27,6 +28,32 @@
 		<h3>{% trans "Rights" %}</h3>
 		<p>{{ entry.rights }}</p>
 	</div>
+	{% if form %}
+		<div id="edit" class="tab-content">
+			<form action="{% url wididit:web:entry entry.author entry.id %}" method="post">
+				{% csrf_token %}
+				<input id="rights" name="rights" type="hidden" value="{{ form.rights.value }}" />
+				<div {% if form.title.errors %}class="notice error"{% endif %}>
+					<label for="title">{% trans "Title:" %}</label>
+					{{ form.title.errors }}
+					<input id="title" name="title" placeholder="{% trans "A title for your entry." %}" type="text" value="{{ form.title.value }}"/>
+				</div>
+				<div {% if form.subtitle.errors %}class="notice error"{% endif %}>
+					<label for="subtitle">{% trans "Subtitle:" %}</label>
+					{{ form.subtitle.errors }}
+					<input id="subtitle" name="subtitle" placeholder="{% trans "A subtitle for your entry." %}" type="text" value="{{ form.subtitle.value }}"/>
+				</div>
+
+				<div {% if form.content.errors %}class="notice error"{% endif %}>
+					<label for="content">{% trans "Content:" %}</label>
+					{{ form.content.errors }}
+					<textarea id="content" name="content" placeholder="{% trans "Your content" %}">{{ form.content.value }}</textarea>
+				</div>
+				<input type="submit" id="post" name="post" value="{% trans "Post" %}" />
+				<input type="submit" id="preview" name="preview" value="{% trans "Preview" %}" />
+			</form>
+		</div>
+	{% endif %}
 {% endblock %}
 
 

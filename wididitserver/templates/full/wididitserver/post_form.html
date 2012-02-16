@@ -7,6 +7,7 @@
 {% endblock %}
 
 {% block body %}
+	{{ form.errors }}
 	<ul class="tabs" id="body">
 		{% if entry %}<li><a href="#preview">{% trans "Preview" %}</a></li>{% endif %}
 		<li><a href="#content">{% trans "Content" %}</a></li>
