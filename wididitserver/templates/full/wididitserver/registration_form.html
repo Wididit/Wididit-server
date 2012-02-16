@@ -12,7 +12,7 @@
 		<div {% if form.username.errors %}class="notice error"{% endif %}>
 			<label for="username">{% trans "User ID:" %}</label>
 			{{ form.username.errors }}
-			<input id="username" name="username" placeholder="{% trans "Your user name" %}" type="text" value="{{ form.username.value }}"/>
+			<input id="username" name="username" placeholder="{% trans "Your user name" %}" type="text" value="{% if form.username.value %}{{ form.username.value }}{% endif %}"/>
 		</div>
 
 		<div {% if form.password.errors %}class="notice error"{% endif %}>
@@ -30,7 +30,7 @@
 		<div {% if form.email.errors %}class="notice error"{% endif %}>
 			<label for="email">{% trans "Email address (optional):" %}</label>
 			{{ form.email.errors }}
-			<input id="email" name="email" placeholder="{% trans "you@example.org" %}" type="text" value="{{ form.email.value }}" />
+			<input id="email" name="email" placeholder="{% trans "you@example.org" %}" type="text" value="{% if form.email.value %}{{ form.email.value }}{% endif %}" />
 		</div>
 
 		<button type="submit">{% trans "Register" %}</button>
