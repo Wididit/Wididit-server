@@ -14,6 +14,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import re
+import datetime
 
 from django.core.exceptions import ObjectDoesNotExist, MultipleObjectsReturned
 from django.conf.urls.defaults import patterns, include, url
@@ -210,6 +211,11 @@ class PeopleValidation(Validation):
         for field in required:
             if field not in bundle.data:
                 errors[field] = ['This field is required']
+        for field in ('username', 'password', 'email'):
+            if field in bundle.data and bundle.data[field] is not None and \
+                    not isinstance(bundle.data[field], str) and \
+                    not isinstance(bundle.data[field], unicode):
+                errors[field] = ['This field must be a string.']
         if 'username' in bundle.data and \
                 not self._username_regexp.match(bundle.data['username']):
             errors['username'] = ['This is not a valid username. Valid '
@@ -219,6 +225,16 @@ class PeopleValidation(Validation):
 class PeopleResource(WididitModelResource):
     server = fields.ForeignKey(ServerResource, 'server', readonly=True)
     email = fields.CharField()
+
+    class Meta:
+        resource_name = 'people'
+        queryset = People.objects.all()
+        allowed_methods = ('get', 'post', 'patch')
+        fields = ('username', 'server', 'biography')
+        authentication = PeopleAuthentication()
+        authorization = PeopleAuthorization()
+        validation = PeopleValidation()
+        # TODO: Add throttling for account creation
 
     def dehydrate_server(self, bundle):
         return bundle.obj.server.hostname
@@ -250,16 +266,6 @@ class PeopleResource(WididitModelResource):
             user.set_password(bundle.data['password'])
             user.save()
         return bundle
-
-    class Meta:
-        resource_name = 'people'
-        queryset = People.objects.all()
-        allowed_methods = ('get', 'post', 'patch')
-        fields = ('username', 'server', 'biography')
-        authentication = PeopleAuthentication()
-        authorization = PeopleAuthorization()
-        validation = PeopleValidation()
-        # TODO: Add throttling for account creation
 
     def get_resource_uri(self, bundle):
         return reverse('api_dispatch_detail', kwargs={'resource_name': self._meta.resource_name, 'userid': bundle.obj.userid(), 'api_name': self._meta.api_name})
@@ -361,23 +367,6 @@ v1_api.register(PeopleSubscriptionResource())
 ##########################################################################
 # Entry
 
-class EntryValidation(Validation):
-    def is_valid(self, bundle, request=None):
-        assert request is not None
-        errors = {}
-        if request.method == 'POST':
-            # author is not required, as a default is assigned in obj_create
-            required = ('title', 'content', 'generator')
-        else:
-            required = tuple()
-        for field in required:
-            if field not in bundle.data:
-                errors[field] = ['This field is required']
-        if 'contributors' in bundle.data and \
-                not isinstance(bundle.data['contributors'], list):
-            errors['contributors'] = ['This field must be a list of strings.']
-        return errors
-
 class EntryAuthorization(object):
     def is_authorized(self, request, obj=None):
         if request.method == 'GET':
@@ -402,6 +391,36 @@ class EntryAuthorization(object):
                     obj.author.user == request.user)
         else:
             raise AssertionError(request.method)
+
+class EntryValidation(Validation):
+    def is_valid(self, bundle, request=None):
+        assert request is not None
+        errors = {}
+        if request.method == 'POST':
+            # author is not required, as a default is assigned in obj_create
+            required = ('title', 'content', 'generator')
+        else:
+            required = tuple()
+        for field in required:
+            if field not in bundle.data:
+                errors[field] = ['This field is required']
+
+        for field in ('title', 'author', 'subtitle', 'summary', 'generator',
+                'rights', 'source', 'content', 'in_reply_to', 'category'):
+            if field in bundle.data and bundle.data[field] is not None and \
+                    not isinstance(bundle.data[field], str) and \
+                    not isinstance(bundle.data[field], unicode):
+                errors[field] = ['This field must be a string.']
+        for field in ('contributors',):
+            if field in bundle.data and bundle.data[field] is not None and \
+                    not isinstance(bundle.data[field], list):
+                errors[field] = ['This field must be a list of strings.']
+        for field in ('published', 'updated'):
+            if field in bundle.data and bundle.data[field] is not None and \
+                    not isinstance(bundle.data[field], datetime.datetime):
+                errors[field] = ['This field must be a timestamp.']
+
+        return errors
 
 class EntryResource(WididitModelResource):
     author = fields.ForeignKey(PeopleResource, 'author')
@@ -562,6 +581,11 @@ class ShareValidation(Validation):
         assert request.method == 'POST'
         if 'entry' not in bundle.data:
             return {'entry': ['This field is required']}
+        for field in ('entry',):
+            if field in bundle.data and bundle.data[field] is not None and \
+                    not isinstance(bundle.data[field], str) and \
+                    not isinstance(bundle.data[field], unicode):
+                errors[field] = ['This field must be a string.']
         if not self._entry_regexp.match(bundle.data['entry']):
             return {'entry': ['This is not a valid entry. Valid '
                     'entries match \"%s/[0-9]+\"' % constants.USERID_MIX_REGEXP]}
