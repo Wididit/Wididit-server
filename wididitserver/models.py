@@ -59,6 +59,11 @@ def get_people(userid):
     server = get_server(servername)
     return People.objects.get(username=username, server=server)
 
+def get_entry(id_):
+    userid, entryid = id_.split('/')
+    author = get_people(userid)
+    return Entry.objects.get(author=author, entryid=entryid)
+
 
 ##########################################################################
 # Server
@@ -104,8 +109,8 @@ class People(models.Model):
         """Returns whether the people is registered on this server."""
         return self.server.is_self()
 
-    def can_edit(self, user):
-        return user.is_staff or user == self.user
+    def can_edit(self, people):
+        return people.user.is_staff or people == self
 
     def __unicode__(self):
         return self.userid()
@@ -202,7 +207,7 @@ admin.site.register(Tag, TagAdmin)
 
 class Entry(models.Model, Atomizable):
     # Fields specified in RFC 4287 (Atom Syndication Format)
-    id2 = models.IntegerField(null=True, blank=True)
+    entryid = models.IntegerField(null=True, blank=True)
     content = models.TextField()
     author = models.ForeignKey(People, related_name='author')
     #category = models.ForeignKey(Category, blank=True, null=True)
@@ -240,10 +245,12 @@ class Entry(models.Model, Atomizable):
         # value before a many-to-many relationship can be used.
         super(Entry, self).save(*args, **kwargs)
 
+        """
         self.contributors = []
         if hasattr(self, '_contributors'):
             for people in self._contributors:
                 self.contributors.add(people)
+        """
 
         tags = utils.get_tags(self.content)
         self.tags = [Tag.objects.get_or_create_from_path(x) for x in tags]
@@ -269,11 +276,11 @@ class Entry(models.Model, Atomizable):
         return people == self.author
 
     def __unicode__(self):
-        return '%s/%s' % (self.author, self.id2)
+        return '%s/%s' % (self.author, self.entryid)
 
     class Meta:
         verbose_name_plural = 'Entries'
-        unique_together = ('id2', 'author',)
+        unique_together = ('entryid', 'author',)
 
 @receiver(post_save)
 def set_entry_id(sender, **kwargs):
@@ -281,12 +288,12 @@ def set_entry_id(sender, **kwargs):
     if not isinstance(entry, Entry) or not kwargs['created']:
         return
 
-    if entry.id2 is not None:
+    if entry.entryid is not None:
         return
     max_id = Entry.objects\
             .filter(author=entry.author) \
-            .order_by('-id2')[0].id2 or 0
-    entry.id2 = max_id + 1
+            .order_by('-entryid')[0].entryid or 0
+    entry.entryid = max_id + 1
     entry.save()
 
 Signal().connect(set_entry_id, Entry)
@@ -328,7 +335,7 @@ class EntryForm(forms.ModelForm):
 
     class Meta:
         model = Entry
-        exclude = ('id2', 'author', 'published', 'updated')
+        exclude = ('entryid', 'author', 'published', 'updated')
 
 
 
@@ -367,18 +374,18 @@ class PeopleSubscriptionForm(SubscriptionForm):
 
 class Share(models.Model):
     entry = models.ForeignKey(Entry)
-    people = models.ForeignKey(People)
+    by = models.ForeignKey(People)
     timestamp = models.DateTimeField(auto_now=True)
 
     def __unicode__(self):
         return '%s by %s' % (self.entry, self.people)
 
     class Meta:
-        unique_together = ('entry', 'people',)
+        unique_together = ('entry', 'by',)
 
 class ShareForm(forms.ModelForm):
     entry = EntryField(Entry)
 
     class Meta:
         model = Share
-        exclude = ('people', 'timestamp',)
+        exclude = ('by', 'timestamp',)

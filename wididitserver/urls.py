@@ -7,8 +7,8 @@ urlpatterns = patterns('',
     url(r'^oauth/access_token/$',   'piston.authentication.oauth_access_token'),
 
     # API
-    url(r'^api/(?P<emitter_format>[^/]+)/',
-        include('wididitserver.api', namespace='api')),
+    url(r'^api/',
+        include('wididitserver.api')),
 
     # Web interface
     url(r'^web/', include('wididitserver.views', namespace='web')),

@@ -14,7 +14,6 @@ from wididit import constants
 from wididitserver.models import validate_username, models
 from wididitserver.models import PeopleForm, EntryForm
 from wididitserver.models import People, Entry
-from wididitserver.api import EntryHandler
 
 def error(request, title, message):
     c = RequestContext(request, {
