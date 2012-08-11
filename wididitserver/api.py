@@ -22,12 +22,6 @@ from django.core.urlresolvers import reverse
 from django import http as djhttp
 from django.db import IntegrityError
 
-from piston.authentication import OAuthAuthentication, HttpBasicAuthentication
-from piston.handler import BaseHandler, AnonymousBaseHandler
-from piston.utils import validate
-from piston.utils import rc
-from piston.models import Consumer, Token
-
 from tastypie.api import Api
 import tastypie.fields as fields
 from tastypie.resources import ModelResource, convert_post_to_put
@@ -48,17 +42,10 @@ from wididitserver.models import PeopleSubscriptionForm, ShareForm
 from wididitserver.models import get_server, get_people, get_entry
 from wididitserver.utils import settings
 import wididitserver.utils as serverutils
-from wididitserver.pistonextras import ConsumerForm, TokenForm
-from wididitserver.pistonextras import StrictOAuthAuthentication
-from wididitserver.pistonextras import CsrfExemptResource as Resource
 
 
 ##########################################################################
 # Utils
-
-http_auth = HttpBasicAuthentication(realm='Wididit server')
-oauth_auth = OAuthAuthentication(realm='Wididit server')
-auth = http_auth
 
 v1_api = Api(api_name='v1')
 
