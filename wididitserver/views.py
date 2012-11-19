@@ -41,31 +41,29 @@ def context_processor(request):
             'request': request,
         }
 
-def api_handler(request, handler, mode=None):
-    """Returns the handler from the API."""
+def api_resource(request, resource):
+    """Returns the resource from the API."""
     from wididitserver import api
-    handler = getattr(api, handler + 'Handler')
-    if not request.user.is_authenticated():
-        handler = handler.anonymous
-    handler = handler()
-    if mode:
-        handler = getattr(handler, mode)
-    return handler
-def api_request(request, handler, mode='read', **kwargs):
-    handler = api_handler(request, handler, mode)
-    return handler(request, **kwargs)
+    return getattr(api, resource + 'Resource')()
+def api_request(request, resource, mode='get', obj=None, **kwargs):
+    resource = api_resource(request, resource)
+    method = getattr(resource, 'obj_' + mode)
+    bundle = resource.build_bundle(obj=obj, request=request)
+
+    return method(request, **kwargs)
 
 def index(request):
     c = RequestContext(request, {
-            'entries': api_request(request, 'Entry'),
+            'entries': api_request(request, 'Entry', 'get_list'),
             'post_form' : EntryForm(),
         })
     return render_to_response('wididitserver/index.html', c)
 
 def show_people(request, userid):
+    people = api_request(request, 'People', 'get', userid=userid)
     c = RequestContext(request, {
-            'people': api_request(request, 'People', userid=userid),
-            'entries': api_request(request, 'Entry', userid=userid),
+            'people': people,
+            'entries': api_request(request, 'Entry', 'get_list', author=people),
         })
     return render_to_response('wididitserver/people.html', c)
 
@@ -157,7 +155,7 @@ def post(request):
                 entry.author = author
                 entry.save()
                 return HttpResponseRedirect(reverse('wididit:web:entry',
-                        args=[entry.author, entry.id2]))
+                        args=[entry.author, entry.entryid]))
             elif 'preview' in request.POST:
                 entry = form.save(commit=False)
                 author = People.objects.get(user=request.user)
@@ -171,7 +169,8 @@ def post(request):
     return render_to_response('wididitserver/post_form.html', c)
 
 def show_entry(request, userid, entryid):
-    entry = EntryHandler().read(request, userid=userid, entryid=entryid)
+    author = api_request(request, 'People', 'get', userid=userid)
+    entry = api_request(request, 'Entry', 'get', author=author, entryid=entryid)
     form = EntryForm(instance=entry)
     if request.method == 'POST':
         people = People.objects.get(user=request.user)

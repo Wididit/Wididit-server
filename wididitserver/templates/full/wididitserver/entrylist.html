@@ -9,7 +9,7 @@
 		<a href="{% url wididit:web:people entry.author %}" class="author people">
 			{{ entry.author.username }}<span class="hostname">@{{ entry.author.server.hostname }}</span>
 		</a>
-		<h3><a href="{% url wididit:web:entry entry.author entry.id2 %}">{{ entry.title }}</a></h3><br />
+		<h3><a href="{% url wididit:web:entry entry.author entry.entryid %}">{{ entry.title }}</a></h3><br />
 		<div style="white-space: pre-wrap; font-family: monospace;">{{ entry.summary }}</div>
 		<div class="entryend"></div>
 	</li>

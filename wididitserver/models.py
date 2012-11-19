@@ -54,10 +54,13 @@ def get_server(hostname=None):
     return Server.objects.get(hostname=hostname)
 
 def get_people(userid):
-    username, servername = utils.userid2tuple(userid,
-            settings.WIDIDIT_HOSTNAME)
-    server = get_server(servername)
-    return People.objects.get(username=username, server=server)
+    if isinstance(userid, People):
+        return userid
+    else:
+        username, servername = utils.userid2tuple(userid,
+                settings.WIDIDIT_HOSTNAME)
+        server = get_server(servername)
+        return People.objects.get(username=username, server=server)
 
 def get_entry(id_):
     userid, entryid = id_.split('/')

@@ -238,6 +238,13 @@ class PeopleResource(WididitModelResource):
 
     def dehydrate_server(self, bundle):
         return bundle.obj.server.hostname
+    def obj_get(self, *args, **kwargs):
+        if 'userid' in kwargs:
+            people = get_people(kwargs['userid'])
+            kwargs.update({'username': people.username,
+                'server': str(people.server.pk)})
+            del kwargs['userid']
+        return super(PeopleResource, self).obj_get(*args, **kwargs)
     def remove_api_resource_names(self, kwargs):
         # split userid field.
         if 'userid' in kwargs:
